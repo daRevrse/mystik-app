@@ -1,0 +1,49 @@
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './pages/client/Home';
+import Product from './pages/client/Product';
+import Checkout from './pages/client/Checkout';
+import Success from './pages/client/Success';
+import Dashboard from './pages/admin/Dashboard';
+import Orders from './pages/admin/Orders';
+import AdminProducts from './pages/admin/Products';
+import Navbar from './components/common/Navbar';
+import Footer from './components/common/Footer';
+import AdminLayout from './components/common/AdminLayout';
+
+function App() {
+  return (
+    <Router>
+      <div className="flex flex-col min-h-screen">
+        <Routes>
+          {/* Routes Client */}
+          <Route
+            path="/*"
+            element={
+              <>
+                <Navbar />
+                <main className="flex-grow">
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/product/:id" element={<Product />} />
+                    <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/success" element={<Success />} />
+                  </Routes>
+                </main>
+                <Footer />
+              </>
+            }
+          />
+
+          {/* Routes Admin */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="orders" element={<Orders />} />
+            <Route path="products" element={<AdminProducts />} />
+          </Route>
+        </Routes>
+      </div>
+    </Router>
+  );
+}
+
+export default App;
