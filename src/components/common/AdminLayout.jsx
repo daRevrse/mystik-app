@@ -1,13 +1,15 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Coffee, ArrowLeft, LogOut } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Coffee, ArrowLeft } from 'lucide-react';
+import { useAdminStore } from '../../store/useAdminStore';
 
 const AdminLayout = () => {
   const location = useLocation();
+  const { newOrdersCount } = useAdminStore();
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Tableau de Bord', path: '/admin' },
-    { icon: ShoppingCart, label: 'Commandes', path: '/admin/orders' },
+    { icon: ShoppingCart, label: 'Commandes', path: '/admin/orders', badge: newOrdersCount },
     { icon: Coffee, label: 'Produits', path: '/admin/products' },
   ];
 
@@ -17,11 +19,11 @@ const AdminLayout = () => {
       <aside className="hidden md:flex w-72 bg-secondary text-white flex-col h-full shrink-0">
         <div className="p-8">
           <Link to="/" className="flex items-center gap-3">
-            <img src="/images/mystik/logo mystik.jpg" alt="Logo Mystik" className="w-10 h-10 object-contain rounded-none brightness-0 invert" />
-            <span className="font-display text-2xl font-bold tracking-tight text-white uppercase italic">
-              MYSTIK<span className="text-amber-500">.</span>
+            <img src="/images/mystik/logo mystik black.png" alt="Logo Mystik" className="w-10 h-10 object-contain rounded-none" />
+            <span className="font-display text-2xl font-bold tracking-tight text-white uppercase italic leading-none">
+              MYSTIK<br />
+              <span className="text-amber-500 text-xs">LEGEND'S DRINK</span>
             </span>
-            <span className="ml-2 bg-amber-500 text-secondary text-[10px] px-2 py-0.5 font-bold tracking-widest leading-none italic">ADMIN</span>
           </Link>
         </div>
 
@@ -33,14 +35,21 @@ const AdminLayout = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center space-x-3 px-4 py-3 rounded-none transition-all duration-300 font-bold text-[11px] uppercase tracking-widest ${
+                className={`flex items-center justify-between px-4 py-3 rounded-none transition-all duration-300 font-bold text-[11px] uppercase tracking-widest ${
                   isActive 
                     ? 'bg-amber-500 text-secondary shadow-xl shadow-amber-500/10 scale-105 origin-left' 
                     : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-secondary' : 'text-gray-400'}`} />
-                <span>{item.label}</span>
+                <div className="flex items-center space-x-3">
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-secondary' : 'text-gray-400'}`} />
+                  <span>{item.label}</span>
+                </div>
+                {item.badge > 0 && !isActive && (
+                  <span className="bg-red-500 text-white text-[8px] w-4 h-4 flex items-center justify-center rounded-none animate-bounce shadow-lg">
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -57,11 +66,11 @@ const AdminLayout = () => {
       {/* Mobile Top Header - Clean & Simple */}
       <div className="md:hidden bg-white border-b border-gray-100 p-4 flex justify-between items-center sticky top-0 z-40 backdrop-blur-md bg-white/90">
         <Link to="/" className="font-display text-xl font-bold uppercase italic flex items-center gap-2">
-          <img src="/images/mystik/logo mystik.jpg" alt="Logo" className="w-6 h-6 grayscale" />
+          <img src="/images/mystik/logo mystik.png" alt="Logo" className="w-6 h-6" />
           MYSTIK<span className="text-amber-500">.</span>
         </Link>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-none bg-amber-50 flex items-center justify-center text-amber-600 text-[10px] font-bold border border-amber-100">
+          <div className="w-8 h-8 rounded-none bg-amber-50 flex items-center justify-center text-amber-600 text-[10px] font-bold border border-amber-100 italic">
             RB
           </div>
         </div>
@@ -70,7 +79,7 @@ const AdminLayout = () => {
       {/* Main Content Area */}
       <main className="flex-grow overflow-auto bg-[#fafaf9] pb-24 md:pb-0">
         <header className="bg-white border-b border-gray-100 px-10 py-6 justify-between items-center sticky top-0 z-10 hidden md:flex">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.5em] italic">Console de Gestion Mystik Legend</p>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.5em] italic leading-none">Console de Gestion • MYSTIK LEGEND'S DRINK</p>
           <div className="flex items-center space-x-6">
             <div className="text-right">
               <p className="text-[11px] font-bold text-secondary uppercase tracking-tight">Responsable Boutique</p>
@@ -100,6 +109,11 @@ const AdminLayout = () => {
             >
               <div className={`p-2 rounded-none transition-all duration-300 ${isActive ? 'text-amber-500' : 'text-gray-500'}`}>
                 <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+                {item.badge > 0 && !isActive && (
+                  <span className="absolute top-1 right-1 bg-red-500 text-white text-[7px] w-3 h-3 flex items-center justify-center rounded-none shadow-lg">
+                    {item.badge}
+                  </span>
+                )}
               </div>
               <span className={`text-[8px] font-bold uppercase tracking-[0.15em] transition-all duration-300 ${isActive ? 'text-white' : 'text-gray-500'}`}>
                 {item.label === 'Tableau de Bord' ? 'Bord' : item.label}

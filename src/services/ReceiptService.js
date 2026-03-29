@@ -9,6 +9,9 @@ export const ReceiptService = {
     const isPaid = order.paymentStatus === 'Payé';
     const title = isPaid ? 'REÇU DE PAIEMENT' : 'FACTURE PROFORMA';
     
+    // Calcul précis du total basé sur les articles réels
+    const subtotal = order.items.reduce((acc, item) => acc + (item.price * (item.quantity || 1)), 0);
+    
     // Création d'un élément temporaire pour le rendu HTML vers Canvas
     const element = document.createElement('div');
     element.style.padding = '48px';
@@ -22,13 +25,16 @@ export const ReceiptService = {
     
     element.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 60px;">
-        <div>
-          <h1 style="font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 900; margin: 0; letter-spacing: -1px;">
-            MYSTIK <span style="color: #d4af37;">LEGEND</span>
-          </h1>
-          <p style="text-transform: uppercase; font-size: 10px; font-weight: 700; letter-spacing: 4px; color: #9ca3af; margin-top: 10px;">
-            L'Esprit du Togo 🇹🇬 Artisanat d'Excellence
-          </p>
+        <div style="display: flex; align-items: center; gap: 20px;">
+          <img src="/images/mystik/logo mystik.png" style="width: 60px; height: 60px; object-contain;" />
+          <div>
+            <h1 style="font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 900; margin: 0; letter-spacing: -1px; line-height: 1;">
+              MYSTIK<br /><span style="color: #d4af37; font-size: 18px; letter-spacing: 2px;">LEGEND'S DRINK</span>
+            </h1>
+            <p style="text-transform: uppercase; font-size: 8px; font-weight: 700; letter-spacing: 3px; color: #9ca3af; margin-top: 5px;">
+              L'Esprit du Togo 🇹🇬 Artisanat d'Excellence
+            </p>
+          </div>
         </div>
         <div style="text-align: right;">
           <h2 style="font-size: 24px; font-weight: 800; color: #0a0a0a; margin: 0; text-transform: uppercase;">${title}</h2>
@@ -67,9 +73,9 @@ export const ReceiptService = {
                 <p style="font-size: 14px; font-weight: 700; margin: 0;">${item.name}</p>
                 <p style="font-size: 11px; color: #9ca3af; margin: 5px 0;">Liqueur Premium - ${item.size || '75cl'}</p>
               </td>
-              <td style="padding: 20px 0; text-align: center; font-size: 14px;">1</td>
+              <td style="padding: 20px 0; text-align: center; font-size: 14px;">${item.quantity || 1}</td>
               <td style="padding: 20px 0; text-align: right; font-size: 14px;">${new Intl.NumberFormat('fr-FR').format(item.price)} FCFA</td>
-              <td style="padding: 20px 0; text-align: right; font-size: 14px; font-weight: 700;">${new Intl.NumberFormat('fr-FR').format(item.price)} FCFA</td>
+              <td style="padding: 20px 0; text-align: right; font-size: 14px; font-weight: 700;">${new Intl.NumberFormat('fr-FR').format(item.price * (item.quantity || 1))} FCFA</td>
             </tr>
           `).join('')}
         </tbody>
@@ -79,7 +85,7 @@ export const ReceiptService = {
         <div style="width: 250px;">
           <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
             <span style="font-size: 12px; color: #6b7280;">Sous-total :</span>
-            <span style="font-size: 12px; font-weight: 700;">${new Intl.NumberFormat('fr-FR').format(order.total)} FCFA</span>
+            <span style="font-size: 12px; font-weight: 700;">${new Intl.NumberFormat('fr-FR').format(subtotal)} FCFA</span>
           </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
             <span style="font-size: 12px; color: #6b7280;">Taxes (0%) :</span>
@@ -87,7 +93,7 @@ export const ReceiptService = {
           </div>
           <div style="display: flex; justify-content: space-between; border-top: 2px solid #0a0a0a; padding-top: 15px;">
             <span style="font-size: 14px; font-weight: 800; text-transform: uppercase;">TOTAL NET :</span>
-            <span style="font-size: 20px; font-weight: 900; color: #d4af37;">${new Intl.NumberFormat('fr-FR').format(order.total)} FCFA</span>
+            <span style="font-size: 20px; font-weight: 900; color: #d4af37;">${new Intl.NumberFormat('fr-FR').format(subtotal)} FCFA</span>
           </div>
         </div>
       </div>
@@ -101,7 +107,7 @@ export const ReceiptService = {
 
       <div style="text-align: center; border-top: 1px solid #f3f4f6; padding-top: 30px; margin-top: 40px;">
         <p style="font-size: 9px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px;">
-          Mystik Legend SARL • Quartier Administratif, Lomé • RCCM TOGO 2026-B-001 • mystik.tg
+          MYSTIK LEGEND'S DRINK • Zone Industrielle, Lomé • RCCM TOGO 2026-B-001 • mystik.tg
         </p>
       </div>
     `;

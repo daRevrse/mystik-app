@@ -4,8 +4,12 @@ import { api } from '../services/api';
 export const useAdminStore = create((set, get) => ({
   orders: [],
   products: [],
+  newOrdersCount: 0,
   isLoading: false,
   error: null,
+
+  incrementNewOrders: () => set((state) => ({ newOrdersCount: state.newOrdersCount + 1 })),
+  resetNewOrdersCount: () => set({ newOrdersCount: 0 }),
 
   fetchOrders: async () => {
     set({ isLoading: true });

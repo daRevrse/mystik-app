@@ -12,12 +12,14 @@ import { ReceiptService } from '../../services/ReceiptService';
 const Orders = () => {
   const { 
     orders, fetchOrders, updateStatus, isLoading, 
-    addOrder, togglePaymentStatus, products, fetchProducts 
+    addOrder, togglePaymentStatus, products, fetchProducts,
+    resetNewOrdersCount
   } = useAdminStore();
   
   const [filter, setFilter] = useState('Tous');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedMobileOrder, setSelectedMobileOrder] = useState(null);
   
   // Formulaire de création
   const [newOrder, setNewOrder] = useState({
@@ -29,7 +31,8 @@ const Orders = () => {
   useEffect(() => {
     fetchOrders();
     fetchProducts();
-  }, [fetchOrders, fetchProducts]);
+    resetNewOrdersCount();
+  }, [fetchOrders, fetchProducts, resetNewOrdersCount]);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('fr-FR').format(Math.round(price)) + ' FCFA';
@@ -41,12 +44,6 @@ const Orders = () => {
                           o.customer.lastName.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   });
-
-  const statusVariants = {
-    'En attente': 'warning',
-    'En préparation': 'info',
-    'Livrée': 'success'
-  };
 
   const handleAddProduct = (product) => {
     setNewOrder(prev => ({
@@ -78,17 +75,17 @@ const Orders = () => {
                Flux de <span className="text-amber-500 underline decoration-black/5 decoration-8 underline-offset-8">COMMANDES</span>
              </h1>
           </div>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.4em] italic opacity-70">Journal des honneurs - Mystik Legend</p>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.4em] italic opacity-70">Journal des honneurs • MYSTIK LEGEND'S DRINK</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex bg-white p-1 shadow-xl border border-gray-100">
+          <div className="flex bg-white p-1 shadow-xl border border-gray-100 overflow-x-auto max-w-full">
             {['Tous', 'En attente', 'En préparation', 'Livrée'].map(s => (
               <button
                 key={s}
                 onClick={() => setFilter(s)}
                 className={`
-                  px-6 py-3 rounded-none text-[9px] font-bold tracking-widest uppercase transition-all duration-300
+                  px-4 md:px-6 py-3 rounded-none text-[9px] font-bold tracking-widest uppercase transition-all duration-300 whitespace-nowrap
                   ${filter === s 
                     ? 'bg-secondary text-white shadow-lg' 
                     : 'text-gray-400 hover:text-secondary hover:bg-gray-50'}
@@ -101,7 +98,7 @@ const Orders = () => {
 
           <Button 
             onClick={() => setIsModalOpen(true)}
-            className="bg-amber-500 hover:bg-secondary text-white px-8 py-4 text-[10px] font-bold tracking-[0.2em] uppercase italic flex items-center gap-3 border-none shadow-2xl transition-all active:scale-95"
+            className="w-full md:w-auto bg-amber-500 hover:bg-secondary text-white px-8 py-4 text-[10px] font-bold tracking-[0.2em] uppercase italic flex items-center justify-center gap-3 border-none shadow-2xl transition-all active:scale-95"
           >
             <Plus className="w-4 h-4" />
             Nouvel Honneur
@@ -110,7 +107,7 @@ const Orders = () => {
       </div>
 
       <Card className="border-none shadow-2xl bg-white overflow-hidden rounded-none">
-        <div className="p-10 border-b border-gray-50 flex flex-col md:flex-row justify-between items-center gap-8 bg-gray-50/30">
+        <div className="p-6 md:p-10 border-b border-gray-50 flex flex-col md:flex-row justify-between items-center gap-8 bg-gray-50/30">
           <div className="relative w-full md:w-96">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input 
@@ -126,7 +123,8 @@ const Orders = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* --- DESKTOP TABLE VIEW --- */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-[#fafaf9] border-b border-gray-100">
               <tr className="text-[9px] font-bold tracking-[0.3em] text-gray-400 uppercase">
@@ -158,7 +156,7 @@ const Orders = () => {
                       <div className="flex -space-x-3">
                         {order.items.slice(0, 3).map((item, i) => (
                           <div key={i} className="w-10 h-10 border-2 border-white overflow-hidden bg-white shadow-xl" title={item.name}>
-                            <img src={item.image} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" alt={item.name} />
+                            <img src={item.image} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000" alt={item.name} />
                           </div>
                         ))}
                       </div>
@@ -176,21 +174,16 @@ const Orders = () => {
                     </td>
                     <td className="px-10 py-8">
                       <div className="flex items-center justify-center gap-2">
-                        {/* Action PDF : Facture ou Reçu */}
                         <Button 
                           variant="ghost" 
                           size="sm" 
                           onClick={() => ReceiptService.generatePDF(order)}
-                          className={`
-                            py-3 px-5 text-[9px] font-bold tracking-widest uppercase border flex items-center gap-2
-                            ${order.paymentStatus === 'Payé' ? 'bg-secondary text-white hover:bg-amber-600' : 'bg-white text-secondary border-gray-200 hover:bg-gray-50'}
-                          `}
+                          className={`py-3 px-5 text-[9px] font-bold tracking-widest uppercase border flex items-center gap-2 ${order.paymentStatus === 'Payé' ? 'bg-secondary text-white hover:bg-amber-600' : 'bg-white text-secondary border-gray-200 hover:bg-gray-50'}`}
                         >
                           <FileText className="w-3.5 h-3.5" />
                           {order.paymentStatus === 'Payé' ? 'REÇU' : 'FACTURE'}
                         </Button>
 
-                        {/* Workflow de statut */}
                         {order.status === 'En attente' && (
                           <Button 
                             variant="primary" 
@@ -215,7 +208,7 @@ const Orders = () => {
                         )}
                         
                         <Button variant="ghost" size="sm" className="h-10 w-10 p-0 hover:bg-gray-100 border border-gray-100">
-                          <Eye className="w-4 h-4 text-gray-400" title="Voir détails" />
+                          <Eye className="w-4 h-4 text-gray-400" />
                         </Button>
                       </div>
                     </td>
@@ -225,7 +218,112 @@ const Orders = () => {
             </tbody>
           </table>
         </div>
+
+        {/* --- MOBILE CARD VIEW --- */}
+        <div className="md:hidden divide-y divide-gray-50">
+          {filteredOrders.length === 0 ? (
+            <div className="py-20 text-center text-[10px] font-bold italic tracking-widest uppercase text-gray-300">Aucune commande.</div>
+          ) : (
+            filteredOrders.map(order => (
+              <div key={order.id} className="p-6 space-y-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-xs font-black text-secondary italic tracking-tight uppercase underline decoration-amber-500/30 underline-offset-4">{order.id}</p>
+                    <p className="text-[9px] text-gray-400 font-bold uppercase mt-1">{new Date(order.date).toLocaleDateString('fr-FR')}</p>
+                  </div>
+                  <Badge variant={order.paymentStatus === 'Payé' ? 'success' : 'warning'} className="text-[8px] italic tracking-tighter">
+                    {order.paymentStatus}
+                  </Badge>
+                </div>
+                
+                <div className="flex justify-between items-end">
+                   <div>
+                     <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest mb-1">Honoré</p>
+                     <p className="text-xs font-bold text-secondary uppercase italic leading-none">{order.customer.firstName} {order.customer.lastName}</p>
+                   </div>
+                   <div className="text-right">
+                     <p className="text-sm font-bold text-amber-600 italic tracking-tighter">{formatPrice(order.total)}</p>
+                   </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button 
+                    className="flex-grow bg-secondary text-white py-3 text-[9px] font-bold uppercase tracking-widest"
+                    onClick={() => setSelectedMobileOrder(order)}
+                  >
+                    GÉRER L'HONNEUR
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </Card>
+
+      {/* --- MOBILE ACTION MODAL (Drawer Style) --- */}
+      {selectedMobileOrder && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center">
+           <div className="absolute inset-0 bg-secondary/80 backdrop-blur-sm" onClick={() => setSelectedMobileOrder(null)} />
+           <Card className="relative w-full bg-white p-10 animate-slide-up rounded-none space-y-8">
+              <div className="flex justify-between items-center mb-6">
+                 <div>
+                    <h3 className="text-xl font-display font-bold uppercase italic italic-none">Actions • {selectedMobileOrder.id}</h3>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">Gérer le flux de légende</p>
+                 </div>
+                 <button onClick={() => setSelectedMobileOrder(null)}><X className="w-6 h-6 text-gray-300" /></button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                <Button 
+                  className="w-full py-5 text-[10px] font-bold uppercase bg-amber-50 text-amber-600 border border-amber-200"
+                  onClick={() => {
+                    togglePaymentStatus(selectedMobileOrder.id);
+                    setSelectedMobileOrder(null);
+                  }}
+                >
+                  <CreditCard className="w-4 h-4 mr-3" />
+                  BASCULER PAIEMENT ({selectedMobileOrder.paymentStatus === 'Payé' ? 'Non payé' : 'Payé'})
+                </Button>
+
+                <Button 
+                  className="w-full py-5 text-[10px] font-bold uppercase bg-secondary text-white"
+                  onClick={() => {
+                    ReceiptService.generatePDF(selectedMobileOrder);
+                    setSelectedMobileOrder(null);
+                  }}
+                >
+                  <Download className="w-4 h-4 mr-3" />
+                  GÉNÉRER {selectedMobileOrder.paymentStatus === 'Payé' ? 'REÇU' : 'FACTURE'} PDF
+                </Button>
+
+                {selectedMobileOrder.status === 'En attente' && (
+                  <Button 
+                    variant="primary" 
+                    className="w-full bg-amber-600 text-white py-5 text-[10px] font-bold"
+                    onClick={() => {
+                      updateStatus(selectedMobileOrder.id, 'En préparation');
+                      setSelectedMobileOrder(null);
+                    }}
+                  >
+                    MARQUER EN PRÉPARATION
+                  </Button>
+                )}
+                {selectedMobileOrder.status === 'En préparation' && (
+                  <Button 
+                    variant="primary" 
+                    className="w-full bg-blue-600 text-white py-5 text-[10px] font-bold"
+                    onClick={() => {
+                      updateStatus(selectedMobileOrder.id, 'Livrée');
+                      setSelectedMobileOrder(null);
+                    }}
+                  >
+                    MARQUER COMME LIVRÉE
+                  </Button>
+                )}
+              </div>
+           </Card>
+        </div>
+      )}
 
       {/* Modal de Création de Commande */}
       {isModalOpen && (

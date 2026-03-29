@@ -5,11 +5,19 @@ import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import { ReceiptService } from '../../services/ReceiptService';
+import { useAdminStore } from '../../store/useAdminStore';
 
 const Success = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const order = location.state?.order;
+  const { incrementNewOrders } = useAdminStore();
+
+  React.useEffect(() => {
+    if (order) {
+      incrementNewOrders();
+    }
+  }, [order, incrementNewOrders]);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('fr-FR').format(price) + ' FCFA';
