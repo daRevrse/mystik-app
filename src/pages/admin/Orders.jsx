@@ -262,9 +262,9 @@ const Orders = () => {
 
       {/* --- MOBILE ACTION MODAL (Drawer Style) --- */}
       {selectedMobileOrder && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center">
+        <div className="fixed inset-0 z-[100] flex items-end justify-center">
            <div className="absolute inset-0 bg-secondary/80 backdrop-blur-sm" onClick={() => setSelectedMobileOrder(null)} />
-           <Card className="relative w-full bg-white p-10 animate-slide-up rounded-none space-y-8">
+           <Card className="relative w-full bg-white p-10 pb-24 animate-slide-up rounded-none space-y-8">
               <div className="flex justify-between items-center mb-6">
                  <div>
                     <h3 className="text-xl font-display font-bold uppercase italic italic-none">Actions • {selectedMobileOrder.id}</h3>
@@ -327,7 +327,7 @@ const Orders = () => {
 
       {/* Modal de Création de Commande */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-secondary/80 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
           <Card className="relative w-full max-w-4xl bg-white p-12 shadow-2xl animate-slide-up rounded-none overflow-y-auto max-h-[90vh]">
             <button 
