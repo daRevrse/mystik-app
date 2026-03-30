@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingBag, Menu, X, User } from 'lucide-react';
+import { ShoppingBag, Menu, X } from 'lucide-react';
 import { useCartStore } from '../../store/useCartStore';
 
 const Navbar = () => {
@@ -51,10 +51,6 @@ const Navbar = () => {
           <a href="#about" className={`transition-all duration-500 ${navLinkClass}`}>
             NOTRE HISTOIRE
           </a>
-          <Link to="/admin" className={`flex items-center transition-all duration-500 ${navLinkClass}`}>
-            <User className="w-3.5 h-3.5 mr-2" />
-            ADMIN
-          </Link>
         </div>
 
         {/* Actions */}
@@ -82,7 +78,6 @@ const Navbar = () => {
         <div className="md:hidden bg-white border-t border-gray-100 animate-fade-in">
           <div className="flex flex-col p-4 space-y-4 text-sm font-bold tracking-widest text-center">
             <Link to="/" onClick={() => setMobileMenuOpen(false)}>BOUTIQUE</Link>
-            <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>ADMINISTRATION</Link>
           </div>
         </div>
       )}

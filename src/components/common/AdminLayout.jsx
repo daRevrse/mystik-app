@@ -1,11 +1,23 @@
-import React from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, ShoppingCart, Coffee, ArrowLeft } from 'lucide-react';
 import { useAdminStore } from '../../store/useAdminStore';
 
 const AdminLayout = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { newOrdersCount } = useAdminStore();
+
+  useEffect(() => {
+    const isAdmin = localStorage.getItem('isAdmin');
+    if (isAdmin !== 'true') {
+      navigate('/login');
+    }
+  }, [navigate]);
+
+  if (localStorage.getItem('isAdmin') !== 'true') {
+    return null;
+  }
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Tableau de Bord', path: '/admin' },

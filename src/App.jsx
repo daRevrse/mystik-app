@@ -9,6 +9,7 @@ import AdminProducts from './pages/admin/Products';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
 import AdminLayout from './components/common/AdminLayout';
+import Login from './pages/admin/Login';
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
           />
 
           {/* Routes Admin */}
+          <Route path="/login" element={<Login />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="orders" element={<Orders />} />
