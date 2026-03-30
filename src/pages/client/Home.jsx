@@ -5,7 +5,7 @@ import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import { useCartStore } from '../../store/useCartStore';
 import { ArrowRight, Star, Leaf, Ghost, Beer } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Home = () => {
   const [products, setProducts] = useState([]);
@@ -13,6 +13,7 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('Tous');
   const { addItem } = useCartStore();
+  const navigate = useNavigate();
 
   const categories = ['Tous', 'Fruitée', 'Authentique', 'Spéciale'];
 
@@ -72,7 +73,12 @@ const Home = () => {
             <Button size="lg" className="w-full md:w-auto px-12 py-6 bg-primary-500 text-secondary" onClick={() => document.getElementById('catalogue').scrollIntoView({ behavior: 'smooth' })}>
               ACHETER MAINTENANT
             </Button>
-            <Button variant="outline" size="lg" className="w-full md:w-auto border-white text-white hover:bg-white hover:text-secondary group px-12 py-6">
+            <Button 
+               variant="outline" 
+               size="lg" 
+               className="w-full md:w-auto border-white text-white hover:bg-white hover:text-secondary group px-12 py-6"
+               onClick={() => navigate('/about')}
+            >
               NOTRE HISTOIRE
               <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
@@ -217,7 +223,12 @@ const Home = () => {
             Mystik n'est pas une liqueur comme les autres. C'est l'âme de nos terres togolaises, une célébration de notre patrimoine et de notre hospitalité.
           </p>
           <div className="flex justify-center">
-             <Button className="btn-primary bg-primary-500 text-secondary border-none hover:bg-white hover:text-black">DÉCOUVRIR NOTRE HISTOIRE</Button>
+             <Button 
+               className="btn-primary bg-primary-500 text-secondary border-none hover:bg-white hover:text-black"
+               onClick={() => navigate('/about')}
+             >
+               DÉCOUVRIR NOTRE HISTOIRE
+             </Button>
           </div>
         </div>
       </section>

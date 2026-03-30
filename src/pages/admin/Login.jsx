@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -8,9 +8,16 @@ const Login = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (localStorage.getItem('mystikPasswordEnabled') === 'false') {
+      navigate('/admin');
+    }
+  }, [navigate]);
+
   const handleLogin = (e) => {
     e.preventDefault();
-    if (password === 'mystik2024' || password === 'admin') {
+    const currentParam = localStorage.getItem('mystikPassword') || 'mystik2024';
+    if (password === currentParam || password === 'admin') {
       localStorage.setItem('isAdmin', 'true');
       navigate('/admin');
     } else {

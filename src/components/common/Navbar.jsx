@@ -19,7 +19,7 @@ const Navbar = () => {
 
   const itemCount = getTotalItems();
 
-  const isTransparent = location.pathname === '/' && !isScrolled;
+  const isTransparent = (location.pathname === '/' || location.pathname === '/about') && !isScrolled;
   const textColor = isTransparent ? 'text-white' : 'text-secondary';
   const navLinkClass = isTransparent 
     ? 'text-white/80 hover:text-white' 
@@ -48,9 +48,9 @@ const Navbar = () => {
           <Link to="/" className={`transition-all duration-500 ${location.pathname === '/' && !isTransparent ? 'text-primary-600' : navLinkClass}`}>
             BOUTIQUE
           </Link>
-          <a href="#about" className={`transition-all duration-500 ${navLinkClass}`}>
+          <Link to="/about" className={`transition-all duration-500 ${location.pathname === '/about' && !isTransparent ? 'text-primary-600' : navLinkClass}`}>
             NOTRE HISTOIRE
-          </a>
+          </Link>
         </div>
 
         {/* Actions */}
@@ -78,6 +78,7 @@ const Navbar = () => {
         <div className="md:hidden bg-white border-t border-gray-100 animate-fade-in">
           <div className="flex flex-col p-4 space-y-4 text-sm font-bold tracking-widest text-center">
             <Link to="/" onClick={() => setMobileMenuOpen(false)}>BOUTIQUE</Link>
+            <Link to="/about" onClick={() => setMobileMenuOpen(false)}>NOTRE HISTOIRE</Link>
           </div>
         </div>
       )}

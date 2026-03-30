@@ -74,7 +74,7 @@ const Product = () => {
           {/* Product Info */}
           <div className="flex flex-col h-full animate-fade-in">
             <div className="mb-10">
-              <span className="text-[10px] font-bold tracking-[0.4em] text-primary-600 uppercase mb-4 block underline decoration-primary-500 decoration-2 underline-offset-4">Produit du Togo 🇹🇬</span>
+              <span className="text-[10px] font-bold tracking-[0.4em] text-primary-600 uppercase mb-4 block underline decoration-primary-500 decoration-2 underline-offset-4">{product.details?.subtitle || "Produit du Togo 🇹🇬"}</span>
               <h1 className="text-5xl md:text-7xl font-display font-bold text-secondary mb-8 leading-[0.9] uppercase italic">
                 {product.name}
               </h1>
@@ -86,17 +86,71 @@ const Product = () => {
               </p>
             </div>
 
-            {/* Quality Details */}
-            <div className="mb-12 p-8 bg-white/50 border border-gray-100 italic space-y-4">
-               <div className="flex items-center gap-3 text-xs font-bold tracking-widest uppercase">
-                  <Star className="w-4 h-4 text-primary-500" />
-                  <span>Sodabi Artisanal distillé au feu de bois</span>
-               </div>
-               <div className="flex items-center gap-3 text-xs font-bold tracking-widest uppercase">
-                  <Star className="w-4 h-4 text-primary-500" />
-                  <span>Macération longue en fûts de chêne (Roots)</span>
-               </div>
-            </div>
+            {/* Detailed Info */}
+            {product.details ? (
+              <div className="mb-12 space-y-10 animate-fade-in">
+
+                {/* Tasting Notes */}
+                <div>
+                   <h4 className="text-sm font-bold text-secondary tracking-widest uppercase mb-6 border-b border-gray-200 pb-2">
+                     NOTES DE DÉGUSTATION
+                   </h4>
+                   <div className="space-y-4">
+                     <p className="text-xs text-gray-500 font-bold uppercase tracking-widest"><span className="text-secondary/80 mr-2">• Attaque :</span><span className="text-gray-400 italic font-medium">{product.details.taste.attaque}</span></p>
+                     <p className="text-xs text-gray-500 font-bold uppercase tracking-widest"><span className="text-secondary/80 mr-2">• Cœur :</span><span className="text-gray-400 italic font-medium">{product.details.taste.coeur}</span></p>
+                     <p className="text-xs text-gray-500 font-bold uppercase tracking-widest"><span className="text-secondary/80 mr-2">• Finale :</span><span className="text-gray-400 italic font-medium">{product.details.taste.finale}</span></p>
+                   </div>
+                </div>
+
+                {/* Caractère */}
+                {product.details.caractere && product.details.caractere.length > 0 && (
+                   <div>
+                     <h4 className="text-sm font-bold text-secondary tracking-widest uppercase mb-4 border-b border-gray-200 pb-2">
+                       CARACTÈRE
+                     </h4>
+                     <div className="flex flex-wrap gap-3">
+                       {product.details.caractere.map((item, idx) => (
+                         <span key={idx} className="bg-primary-500/10 text-secondary border border-primary-500/20 text-[10px] px-4 py-1.5 font-bold tracking-widest uppercase">
+                           {item}
+                         </span>
+                       ))}
+                     </div>
+                   </div>
+                )}
+
+                {/* Conseils */}
+                <div>
+                   <h4 className="text-sm font-bold text-secondary tracking-widest uppercase mb-4 border-b border-gray-200 pb-2">
+                     CONSEILS DE DÉGUSTATION
+                   </h4>
+                   <ul className="space-y-3">
+                     {product.details.conseils.map((item, idx) => (
+                        <li key={idx} className="text-xs text-gray-500 font-bold tracking-widest uppercase flex items-center gap-3">
+                          <span className="w-1 h-1 bg-primary-500 rounded-full inline-block" />
+                          {item}
+                        </li>
+                     ))}
+                   </ul>
+                </div>
+
+                {/* Made in Togo Block */}
+                <div className="p-8 bg-white border border-gray-100 text-center space-y-4 shadow-sm">
+                  <span className="text-xs font-bold text-secondary uppercase tracking-[0.3em] block underline decoration-primary-500 decoration-2 underline-offset-4">MADE IN TOGO 🇹🇬</span>
+                  <p className="text-[11px] text-gray-500 font-bold tracking-widest uppercase leading-loose">{product.details.madeIn}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="mb-12 p-8 bg-white/50 border border-gray-100 italic space-y-4">
+                <div className="flex items-center gap-3 text-xs font-bold tracking-widest uppercase">
+                    <Star className="w-4 h-4 text-primary-500" />
+                    <span>Sodabi Artisanal distillé au feu de bois</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs font-bold tracking-widest uppercase">
+                    <Star className="w-4 h-4 text-primary-500" />
+                    <span>Macération longue en fûts de chêne (Roots)</span>
+                </div>
+              </div>
+            )}
 
             {/* Quantity Selector */}
             <div className="mb-12">
@@ -117,8 +171,11 @@ const Product = () => {
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">
-                  Disponibilité : <span className="text-green-600 font-bold">{product.stock} Bouteilles</span>
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] ml-4">
+                  Disponibilité : <br />
+                  <span className={`text-sm ${product.stock > 0 ? 'text-green-600' : 'text-red-500'} font-bold`}>
+                    {product.stock > 0 ? 'Disponible' : 'Épuisé'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -127,10 +184,11 @@ const Product = () => {
             <div className="flex flex-col sm:flex-row gap-4 mb-20">
               <Button 
                 size="lg" 
-                className="flex-grow py-6 text-lg font-display tracking-widest italic"
+                className="flex-grow py-6 text-lg font-display tracking-widest italic disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => addItem(product, quantity)}
+                disabled={product.stock === 0}
               >
-                AJOUTER À MA COLLECTION — {formatPrice(product.price * quantity)}
+                {product.stock > 0 ? `AJOUTER À MA COLLECTION — ${formatPrice(product.price * quantity)}` : 'PRODUIT ÉPUISÉ'}
               </Button>
             </div>
 

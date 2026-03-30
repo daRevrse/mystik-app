@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera, Globe, MessageCircle } from 'lucide-react';
+import { Camera, MessageCircle } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -17,11 +17,10 @@ const Footer = () => {
             <p className="max-w-xs text-[10px] font-bold tracking-widest uppercase mb-4 opacity-50 underline decoration-primary-500 decoration-2 underline-offset-4">Mystik - Legend's drink</p>
             <p className="max-w-xs text-sm leading-relaxed mb-6 italic opacity-70">
               Découvrez l’Esprit Authentique de Nos Terres. L'excellence du Sodabi Togolais, distillé avec passion.
-              <br /><span className="text-xs font-bold mt-2 inline-block">Made in TOGO</span>
+              <br /><span className="text-xs font-bold mt-2 inline-block">Made in TOGO 🇹🇬</span>
             </p>
             <div className="flex space-x-4">
               <Camera className="w-5 h-5 hover:text-white transition-colors cursor-pointer" />
-              <Globe className="w-5 h-5 hover:text-white transition-colors cursor-pointer" />
               <MessageCircle className="w-5 h-5 hover:text-white transition-colors cursor-pointer" />
             </div>
           </div>

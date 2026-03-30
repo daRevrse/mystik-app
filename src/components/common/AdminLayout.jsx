@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Coffee, ArrowLeft } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Coffee, ArrowLeft, Settings } from 'lucide-react';
 import { useAdminStore } from '../../store/useAdminStore';
 
 const AdminLayout = () => {
@@ -9,13 +9,15 @@ const AdminLayout = () => {
   const { newOrdersCount } = useAdminStore();
 
   useEffect(() => {
+    const isPasswordEnabled = localStorage.getItem('mystikPasswordEnabled') !== 'false';
     const isAdmin = localStorage.getItem('isAdmin');
-    if (isAdmin !== 'true') {
+    if (isPasswordEnabled && isAdmin !== 'true') {
       navigate('/login');
     }
   }, [navigate]);
 
-  if (localStorage.getItem('isAdmin') !== 'true') {
+  const isPasswordEnabled = localStorage.getItem('mystikPasswordEnabled') !== 'false';
+  if (isPasswordEnabled && localStorage.getItem('isAdmin') !== 'true') {
     return null;
   }
 
@@ -23,6 +25,7 @@ const AdminLayout = () => {
     { icon: LayoutDashboard, label: 'Tableau de Bord', path: '/admin' },
     { icon: ShoppingCart, label: 'Commandes', path: '/admin/orders', badge: newOrdersCount },
     { icon: Coffee, label: 'Produits', path: '/admin/products' },
+    { icon: Settings, label: 'Paramètres', path: '/admin/settings' },
   ];
 
   return (
@@ -75,32 +78,17 @@ const AdminLayout = () => {
         </div>
       </aside>
 
-      {/* Mobile Top Header - Clean & Simple */}
       <div className="md:hidden bg-white border-b border-gray-100 p-4 flex justify-between items-center sticky top-0 z-40 backdrop-blur-md bg-white/90">
         <Link to="/" className="font-display text-xl font-bold uppercase italic flex items-center gap-2">
           <img src="/images/mystik/logo mystik.png" alt="Logo" className="w-6 h-6" />
           MYSTIK<span className="text-amber-500">.</span>
         </Link>
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-none bg-amber-50 flex items-center justify-center text-amber-600 text-[10px] font-bold border border-amber-100 italic">
-            RB
-          </div>
-        </div>
       </div>
 
       {/* Main Content Area */}
       <main className="flex-grow overflow-auto bg-[#fafaf9] pb-24 md:pb-0">
         <header className="bg-white border-b border-gray-100 px-10 py-6 justify-between items-center sticky top-0 z-10 hidden md:flex">
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.5em] italic leading-none">Console de Gestion • MYSTIK LEGEND'S DRINK</p>
-          <div className="flex items-center space-x-6">
-            <div className="text-right">
-              <p className="text-[11px] font-bold text-secondary uppercase tracking-tight">Responsable Boutique</p>
-              <p className="text-[9px] font-bold text-amber-500 uppercase tracking-widest mt-0.5">Lomé, Togo 🇹🇬</p>
-            </div>
-            <div className="w-10 h-10 rounded-none bg-secondary text-amber-500 flex items-center justify-center font-bold border-2 border-amber-500/20 shadow-lg italic">
-              GM
-            </div>
-          </div>
         </header>
 
         <div className="p-6 md:p-12 animate-fade-in">

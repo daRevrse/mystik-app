@@ -10,32 +10,51 @@ const INITIAL_PRODUCTS = [
   {
     id: 'm1',
     name: 'Mystik Ananas & Gingembre',
-    description: 'L\'esprit authentique de nos terres. Une liqueur de Sodabi artisanale infusée à l\'ananas frais et au gingembre de pays. Made in TOGO.',
-    price: 12500,
+    description: 'Une création audacieuse où la douceur solaire de l\'ananas rencontre la chaleur intense du gingembre. Un équilibre maîtrisé, pensé pour les palais exigeants.',
+    details: {
+      subtitle: "Liqueur d'exception",
+      madeIn: "Conçue et élaborée au Togo, MYSTIK célèbre le savoir-faire local, les saveurs authentiques et l'élégance des racines africaines.",
+      taste: {
+        attaque: "fraîcheur fruitée, ronde et lumineuse",
+        coeur: "ananas juteux et naturel",
+        finale: "montée progressive du gingembre, chaude et persistante"
+      },
+      caractere: ["Audacieuse", "Énergisante", "Élégante", "Inoubliable"],
+      conseils: [
+        "Pure, légèrement fraîche",
+        "En cocktail signature",
+        "En digestif"
+      ]
+    },
+    price: 12000,
     category: 'Fruitée',
-    image: '/images/mystik/liqueur_ananas.webp',
+    image: '/images/mystik/ananas gingembre.jpeg',
     stock: 24,
     vol: '20% Vol',
     size: '75cl'
   },
   {
-    id: 'm2',
-    name: 'Mystik Racines Tradition',
-    description: 'La force de nos ancêtres. Un Sodabi premium infusé avec une sélection rigoureuse de racines et d\'écorces médicinales. Intense et boisé.',
-    price: 15000,
-    category: 'Authentique',
-    image: '/images/mystik/liqueur_racines.webp',
-    stock: 18,
-    vol: '38% Vol',
-    size: '75cl'
-  },
-  {
     id: 'm3',
     name: 'Mystik Banane & Ananas',
-    description: 'Une douceur tropicale. L\'équilibre parfait entre la gourmandise de la banane mûre et l\'acidité de l\'ananas.',
-    price: 12500,
+    description: 'Une création douce et raffinée où l\'ananas solaire s\'unit à la rondeur veloutée de la banane mûre. Un accord harmonieux, délicatement gourmand, pensé pour les palais en quête d\'élégance tropicale et de subtilité.',
+    details: {
+      subtitle: "Liqueur d'exception",
+      madeIn: "Conçue et élaborée au Togo, MYSTIK met en lumière le savoir-faire local, la richesse des fruits tropicaux et l'expression raffinée des racines africaines.",
+      taste: {
+        attaque: "douceur fruitée, ronde et lumineuse",
+        coeur: "ananas juteux sublimé par la banane soyeuse",
+        finale: "gourmande, délicate et harmonieusement persistante"
+      },
+      caractere: [],
+      conseils: [
+        "Pure, légèrement fraîche",
+        "En cocktail doux et exotique",
+        "En digestif gourmand"
+      ]
+    },
+    price: 12000,
     category: 'Fruitée',
-    image: '/images/mystik/groupe de liqueurs 1.webp',
+    image: '/images/mystik/banane ananas.jpeg',
     stock: 30,
     vol: '20% Vol',
     size: '75cl'
@@ -43,10 +62,25 @@ const INITIAL_PRODUCTS = [
   {
     id: 'm4',
     name: 'Mystik Datte Cannelle Café',
-    description: 'Une édition spéciale chaleureuse. Notes de café torréfié, douceur de la datte et parfum de cannelle.',
-    price: 18000,
+    description: 'Une création profonde et envoûtante où la douceur naturelle de la datte s\'entrelace aux notes chaleureuses de la cannelle et à l\'intensité noble du café. Un assemblage racé et sophistiqué, pensé pour les palais en quête de caractère et de profondeur.',
+    details: {
+      subtitle: "Liqueur d'exception",
+      madeIn: "Conçue et élaborée au Togo, MYSTIK sublime le savoir-faire local, les épices nobles et l'élégance intemporelle des racines africaines.",
+      taste: {
+        attaque: "douceur suave et naturellement sucrée",
+        coeur: "datte fondante relevée par la cannelle épicée",
+        finale: "café intense, profonde et longuement persistante"
+      },
+      caractere: ["Intense", "Chaleureuse", "Épicée", "Élégante"],
+      conseils: [
+        "Pure, à température ambiante",
+        "En cocktail sophistiqué",
+        "En digestif de caractère"
+      ]
+    },
+    price: 12000,
     category: 'Spéciale',
-    image: '/images/mystik/groupe de liqueurs 3.jpeg',
+    image: '/images/mystik/datte cannelle café.jpeg',
     stock: 12,
     vol: '35% Vol',
     size: '75cl'
@@ -55,8 +89,8 @@ const INITIAL_PRODUCTS = [
 
 // Utilitaires LocalStorage
 const STORAGE_KEYS = {
-  PRODUCTS: 'mystik_products_v1',
-  ORDERS: 'mystik_orders_v1'
+  PRODUCTS: 'mystik_products_v4',
+  ORDERS: 'mystik_orders_v4'
 };
 
 const getFromStorage = (key, initialValue) => {
