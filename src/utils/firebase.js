@@ -3,12 +3,12 @@ import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 
 // TODO: Remplacer ces valeurs par celles de votre projet Firebase
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDrDVCQ6NUD3EYLHTZqBz7ly_qcHXte3Do",
+  authDomain: "mystikdrinks.firebaseapp.com",
+  projectId: "mystikdrinks",
+  storageBucket: "mystikdrinks.firebasestorage.app",
+  messagingSenderId: "651677416789",
+  appId: "1:651677416789:web:2fb4396cec6932d93843dc"
 };
 
 // Seule la configuration est initialisée
@@ -19,7 +19,17 @@ export const requestNotificationPermission = async () => {
   try {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
-      const token = await getToken(messaging, { vapidKey: "YOUR_VAPID_KEY_HERE" });
+      // Enregistrement manuel du Service Worker pour s'assurer que Vite/React le trouve bien
+      let registration = null;
+      if ('serviceWorker' in navigator) {
+        registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        await navigator.serviceWorker.ready;
+      }
+      
+      const token = await getToken(messaging, { 
+         vapidKey: "BOmOzPQLUnPILR_9Ug7Nk1bYFvm_uTlOI9m2B2-O2s2sNis6RU8E9cIg28v3_x_DyZoF_aQp-Bz25KKH0ExQG5E",
+         serviceWorkerRegistration: registration
+      });
       console.log('FCM Token généré:', token);
       return token;
     } else {

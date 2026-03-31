@@ -35,4 +35,13 @@ export default defineConfig({
       }
     })
   ],
+  server: {
+    proxy: {
+      '/cinetpay-api': {
+        target: 'https://api.cinetpay.net',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/cinetpay-api/, '')
+      }
+    }
+  }
 })

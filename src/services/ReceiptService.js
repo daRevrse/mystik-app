@@ -107,7 +107,7 @@ export const ReceiptService = {
 
       <div style="text-align: center; border-top: 1px solid #f3f4f6; padding-top: 30px; margin-top: 40px;">
         <p style="font-size: 9px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px;">
-          MYSTIK LEGEND'S DRINK • Zone Industrielle, Lomé • RCCM TOGO 2026-B-001 • mystik.tg
+          AFRIK SELECT • BE PA DE SOUZA, LOME • RCCM TG-LFW-01-2024-A-10-04869 • mystikdrinks.com
         </p>
       </div>
     `;

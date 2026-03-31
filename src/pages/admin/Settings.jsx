@@ -7,15 +7,21 @@ import { requestNotificationPermission } from '../../utils/firebase';
 const Settings = () => {
   const [password, setPassword] = useState('');
   const [isPasswordEnabled, setIsPasswordEnabled] = useState(true);
+  const [deliveryFee, setDeliveryFee] = useState(2000);
   const [saved, setSaved] = useState(false);
   const [fcmStatus, setFcmStatus] = useState('Non configuré');
 
   useEffect(() => {
     const currentParam = localStorage.getItem('mystikPassword') || 'mystik2024';
     const enabledParam = localStorage.getItem('mystikPasswordEnabled');
+    const feeParam = localStorage.getItem('mystikDeliveryFee');
+    
     setPassword(currentParam);
     if (enabledParam !== null) {
       setIsPasswordEnabled(enabledParam === 'true');
+    }
+    if (feeParam !== null) {
+      setDeliveryFee(parseInt(feeParam));
     }
   }, []);
 
@@ -23,6 +29,8 @@ const Settings = () => {
     e.preventDefault();
     localStorage.setItem('mystikPassword', password);
     localStorage.setItem('mystikPasswordEnabled', isPasswordEnabled.toString());
+    localStorage.setItem('mystikDeliveryFee', deliveryFee.toString());
+    
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
@@ -90,6 +98,24 @@ const Settings = () => {
                 Activer la protection par mot de passe
               </span>
             </label>
+
+            <div className="pt-4 border-t border-gray-100">
+              <label className="block text-xs font-bold text-secondary tracking-widest uppercase mb-2">
+                Frais de livraison par Défaut (FCFA)
+              </label>
+              <input
+                type="number"
+                value={deliveryFee}
+                onChange={(e) => setDeliveryFee(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-colors rounded-none"
+                placeholder="Ex: 2000"
+                min="0"
+                required
+              />
+              <p className="text-[10px] text-gray-400 mt-2 font-bold tracking-widest uppercase">
+                Appliqué si le client choisit l'option livraison
+              </p>
+            </div>
 
             <Button type="submit" className="w-full bg-secondary text-white hover:bg-black rounded-none">
               <Save className="w-4 h-4 mr-2" />

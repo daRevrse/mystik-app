@@ -59,7 +59,7 @@ const About = () => {
           </div>
           <div className="order-1 md:order-2 aspect-[3/4] overflow-hidden bg-white shadow-2xl p-4 skew-y-2 transform-gpu hover:skew-y-0 transition-transform duration-700">
             <div className="w-full h-full relative overflow-hidden">
-               <img src="/images/mystik/ananas et liqueurs 3.webp" alt="Ingrédients Mystik" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-[2s] origin-center scale-110 hover:scale-100" />
+               <img src="/images/mystik/Ingredients Mystik.png" alt="Ingrédients Mystik" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-[2s] origin-center scale-110 hover:scale-100" />
                <div className="absolute inset-0 border border-white/50 m-4 pointer-events-none"></div>
             </div>
           </div>

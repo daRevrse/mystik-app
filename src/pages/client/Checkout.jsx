@@ -21,9 +21,12 @@ const Checkout = () => {
     phone: ''
   });
 
+  const [wantsDelivery, setWantsDelivery] = useState(true);
+  const [selectedNetwork, setSelectedNetwork] = useState(null);
+
   const cartTotal = getCartTotal();
-  const deliveryFee = 2500; // Prix de livraison Togo Lomé
-  const grandTotal = cartTotal + deliveryFee;
+  const deliveryFee = parseInt(localStorage.getItem('mystikDeliveryFee') || '2000');
+  const grandTotal = cartTotal + (wantsDelivery ? deliveryFee : 0);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -37,25 +40,40 @@ const Checkout = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (items.length === 0) return;
+    
+    if (!selectedNetwork) {
+       alert("Veuillez sélectionner un réseau mobile (T-Money ou Flooz) pour procéder au paiement.");
+       return;
+    }
 
     setLoading(true);
-    try {
-      const orderData = {
-        customer: formData,
-        items,
-        total: grandTotal,
-        date: new Date().toISOString()
-      };
-      
-      const newOrder = await api.createOrder(orderData);
-      clearCart();
-      navigate('/success', { state: { order: newOrder } });
-    } catch (error) {
-      console.error("Erreur commande", error);
-      alert("Une erreur est survenue lors de la commande.");
-    } finally {
-      setLoading(false);
-    }
+    const transactionId = Math.floor(Math.random() * 100000000).toString();
+
+    // 1. SIMULATION PAIEMENT (En attendant Paygate Global réel)
+    console.log("Simulation du paiement via", selectedNetwork);
+    
+    setTimeout(async () => {
+        try {
+            const orderData = {
+              customer: formData,
+              items,
+              total: grandTotal,
+              transaction_id: transactionId,
+              payment_status: 'Payé', // Statut simulé
+              payment_network: selectedNetwork,
+              delivery_requested: wantsDelivery,
+              date: new Date().toISOString()
+            };
+            
+            const newOrder = await api.createOrder(orderData);
+            clearCart();
+            navigate('/success', { state: { order: newOrder } });
+        } catch (error) {
+            console.error("Erreur enregistrement commande", error);
+            alert("La simulation a fonctionné mais l'enregistrement local a échoué.");
+            setLoading(false);
+        }
+    }, 2500); // 2.5 secondes d'attente
   };
 
   if (items.length === 0) {
@@ -112,18 +130,37 @@ const Checkout = () => {
                   <label className="text-[10px] font-bold tracking-widest text-gray-400 uppercase ml-2">Email</label>
                   <input required type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="contact@email.com" className="w-full bg-white border-transparent border-b-2 border-b-gray-100 px-4 py-4 text-sm focus:outline-none focus:border-b-primary-500 transition-all font-bold tracking-widest uppercase italic placeholder:opacity-30" />
                 </div>
-                <div className="md:col-span-2 space-y-2">
-                  <label className="text-[10px] font-bold tracking-widest text-gray-400 uppercase ml-2">Quartier / Adresse</label>
-                  <input required name="address" value={formData.address} onChange={handleInputChange} placeholder="Quartier Administratif, Rue 42" className="w-full bg-white border-transparent border-b-2 border-b-gray-100 px-4 py-4 text-sm focus:outline-none focus:border-b-primary-500 transition-all font-bold tracking-widest uppercase italic placeholder:opacity-30" />
+                <div className="md:col-span-2 space-y-4 pt-6 border-t border-gray-100 mt-4 mb-4">
+                  <label className="flex items-center gap-3 cursor-pointer group p-4 border border-gray-100 hover:border-amber-100 bg-[#fafaf9] transition-colors">
+                    <input 
+                       type="checkbox" 
+                       checked={wantsDelivery} 
+                       onChange={(e) => setWantsDelivery(e.target.checked)} 
+                       className="w-5 h-5 text-primary-500 accent-primary-500 rounded-none border-gray-300" 
+                    />
+                    <div>
+                        <span className="block text-sm font-bold text-secondary tracking-widest uppercase italic group-hover:text-primary-600 transition-colors">Je souhaite être livré (+ {formatPrice(deliveryFee)})</span>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed block mt-1">Si vous décochez, vous viendrez récupérer votre commande.</span>
+                    </div>
+                  </label>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold tracking-widest text-gray-400 uppercase ml-2">Ville</label>
-                  <input required name="city" value={formData.city} onChange={handleInputChange} placeholder="Lomé" className="w-full bg-white border-transparent border-b-2 border-b-gray-100 px-4 py-4 text-sm focus:outline-none focus:border-b-primary-500 transition-all font-bold tracking-widest uppercase italic placeholder:opacity-30" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold tracking-widest text-gray-400 uppercase ml-2">Zone (Optionnel)</label>
-                  <input name="zipCode" value={formData.zipCode} onChange={handleInputChange} placeholder="Maritime" className="w-full bg-white border-transparent border-b-2 border-b-gray-100 px-4 py-4 text-sm focus:outline-none focus:border-b-primary-500 transition-all font-bold tracking-widest uppercase italic placeholder:opacity-30" />
-                </div>
+
+                {wantsDelivery && (
+                  <>
+                    <div className="md:col-span-2 space-y-2 animate-fade-in">
+                      <label className="text-[10px] font-bold tracking-widest text-gray-400 uppercase ml-2">Quartier / Adresse de résidence</label>
+                      <input required={wantsDelivery} name="address" value={formData.address} onChange={handleInputChange} placeholder="Quartier Administratif, Rue 42" className="w-full bg-white border-transparent border-b-2 border-b-gray-100 px-4 py-4 text-sm focus:outline-none focus:border-b-primary-500 transition-all font-bold tracking-widest uppercase italic placeholder:opacity-30" />
+                    </div>
+                    <div className="space-y-2 animate-fade-in">
+                      <label className="text-[10px] font-bold tracking-widest text-gray-400 uppercase ml-2">Ville</label>
+                      <input required={wantsDelivery} name="city" value={formData.city} onChange={handleInputChange} placeholder="Lomé" className="w-full bg-white border-transparent border-b-2 border-b-gray-100 px-4 py-4 text-sm focus:outline-none focus:border-b-primary-500 transition-all font-bold tracking-widest uppercase italic placeholder:opacity-30" />
+                    </div>
+                    <div className="space-y-2 animate-fade-in">
+                      <label className="text-[10px] font-bold tracking-widest text-gray-400 uppercase ml-2">Zone (Optionnel)</label>
+                      <input name="zipCode" value={formData.zipCode} onChange={handleInputChange} placeholder="Maritime" className="w-full bg-white border-transparent border-b-2 border-b-gray-100 px-4 py-4 text-sm focus:outline-none focus:border-b-primary-500 transition-all font-bold tracking-widest uppercase italic placeholder:opacity-30" />
+                    </div>
+                  </>
+                )}
               </form>
             </Card>
 
@@ -133,13 +170,26 @@ const Checkout = () => {
                 <h3 className="text-2xl font-display font-bold italic tracking-tight uppercase">Paiement & Sécurité</h3>
               </div>
               <div className="p-10 bg-[#fafaf9] border-2 border-dashed border-gray-100 flex flex-col items-center justify-center text-center space-y-6">
-                <div className="flex space-x-4 opacity-50">
-                  <Ghost className="w-10 h-10 text-gray-300" />
-                  <CreditCard className="w-10 h-10 text-gray-400" />
+                <div className="flex space-x-6 justify-center w-full">
+                  <button 
+                      type="button" 
+                      onClick={() => setSelectedNetwork('FLOOZ')}
+                      className={`w-24 h-24 rounded-full overflow-hidden border-[6px] transition-all duration-300 shadow-xl ${selectedNetwork === 'FLOOZ' ? 'border-primary-500 scale-110 shadow-primary-500/30' : 'border-white hover:border-gray-200 opacity-50 hover:opacity-100'}`}>
+                      <img src="/images/moov.jpg" alt="Flooz" className="w-full h-full object-cover" />
+                  </button>
+                  <button 
+                      type="button" 
+                      onClick={() => setSelectedNetwork('TMONEY')}
+                      className={`w-24 h-24 rounded-full overflow-hidden border-[6px] transition-all duration-300 shadow-xl ${selectedNetwork === 'TMONEY' ? 'border-primary-500 scale-110 shadow-primary-500/30' : 'border-white hover:border-gray-200 opacity-50 hover:opacity-100'}`}>
+                      <img src="/images/yas.jpg" alt="T-Money" className="w-full h-full object-cover" />
+                  </button>
                 </div>
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em] leading-relaxed italic opacity-80">
-                  Le paiement mobile (T-money / Moov) et carte bancaire <br />
-                  est activé par défaut. <span className="text-primary-600 underline">Aucun débit réel.</span>
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] leading-relaxed italic opacity-80 max-w-sm mt-4">
+                  {selectedNetwork 
+                      ? <span className="text-primary-600 block mb-2 text-xs">Validation en cours : {selectedNetwork}</span>
+                      : "Sélectionnez le compte Mobile Money qui sera débité pour votre commande."}
+                  <br/>
+                  (Mode Simulation PayGate Global Activé)
                 </p>
               </div>
             </Card>
@@ -185,13 +235,15 @@ const Checkout = () => {
                     <span>Sous-total Artisanal</span>
                     <span className="text-secondary">{formatPrice(cartTotal)}</span>
                   </div>
-                  <div className="flex justify-between text-[10px] font-bold text-gray-400 tracking-[0.2em] uppercase italic opacity-60">
-                    <span className="flex items-center">
-                      Livraison Lomé 🇹🇬
-                      <Truck className="w-4 h-4 ml-3" />
-                    </span>
-                    <span className="text-secondary">{formatPrice(deliveryFee)}</span>
-                  </div>
+                  {wantsDelivery && (
+                    <div className="flex justify-between text-[10px] font-bold text-gray-400 tracking-[0.2em] uppercase italic opacity-60">
+                      <span className="flex items-center">
+                        Livraison Standard 🇹🇬
+                        <Truck className="w-4 h-4 ml-3" />
+                      </span>
+                      <span className="text-secondary">{formatPrice(deliveryFee)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-3xl font-display font-bold pt-8 text-secondary uppercase italic leading-none border-t border-gray-50 mt-4">
                     <span>Total</span>
                     <span className="text-primary-600 underline decoration-black/5 decoration-8 underline-offset-8">{formatPrice(grandTotal)}</span>
@@ -202,12 +254,12 @@ const Checkout = () => {
                   form="checkout-form" 
                   type="submit" 
                   size="lg" 
-                  className="w-full mt-12 py-6 btn-primary shadow-2xl shadow-primary-500/30 font-display italic tracking-widest text-lg"
-                  disabled={loading}
+                  className={`w-full mt-12 py-6 btn-primary shadow-2xl font-display italic tracking-widest text-lg ${!selectedNetwork ? 'opacity-40 grayscale cursor-not-allowed hover:scale-100 hover:shadow-none' : 'shadow-primary-500/30'}`}
+                  disabled={loading || !selectedNetwork}
                 >
-                  {loading ? 'VALIDATION...' : (
+                  {loading ? 'SIMULATION EN COURS...' : !selectedNetwork ? 'SÉLECTIONNEZ UN PAIEMENT' : (
                     <span className="flex items-center justify-center">
-                      COMMANDER • {formatPrice(grandTotal)}
+                      COMMANDER VIA {selectedNetwork}
                       <ChevronRight className="ml-2 w-6 h-6" />
                     </span>
                   )}
