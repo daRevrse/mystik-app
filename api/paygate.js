@@ -17,18 +17,25 @@ export default async function handler(req, res) {
 
     // 2. Nettoyage du numéro de téléphone 
     // Assure qu'on n'envoie que des chiffres à Paygate (Ex: +228 90 00 00 00 -> 22890000000)
-    const cleanPhone = phone ? phone.replace(/[^0-9]/g, '') : '';
+    let cleanPhone = phone ? phone.replace(/[^0-9]/g, '') : '';
+    
+    // Si le numéro commence par +, on l'a déjà géré ci-dessus. 
+    // Mais s'il manque l'indicatif 228 (Togo), on peut l'ajouter si besoin par défaut.
+    if (cleanPhone.length === 8) {
+      cleanPhone = '228' + cleanPhone;
+    }
 
     // 3. Préparation du Payload pour la méthode "USSD Push"
-    // Documentation PayGate v1 : Le réseau doit être 'TMONEY' ou 'FLOOZ'
     const payload = {
       auth_token: PAYGATE_AUTH_TOKEN,
       phone_number: cleanPhone,
       amount: amount,
-      description: `Commande Mystik Beverage #${orderId}`,
-      identifier: orderId, // Paramètre de traçage unique (Aussi renvoyé au webhook de retour)
+      description: `Commande Mystik #${orderId}`,
+      identifier: orderId,
       network: network ? network.toUpperCase() : 'TMONEY'
     };
+
+    console.log("PayGate Payload:", JSON.stringify(payload));
 
     // 4. Lancement de la requête chez Paygate
     const paygateRes = await fetch("https://paygateglobal.com/api/v1/pay", {
@@ -41,19 +48,20 @@ export default async function handler(req, res) {
     });
 
     const paygateData = await paygateRes.json();
+    console.log("PayGate Response Data:", paygateData);
 
-    // 5. Vérification du succès immédiat
-    // Paygate retourne status: 0 quand la requête a bien atteint le téléphone du client
+    // 5. Vérification du succès immédiat (Le push a été envoyé)
     if (paygateRes.ok && paygateData.status === 0 && paygateData.tx_reference) {
       return res.status(200).json({ 
           success: true,
           tx_reference: paygateData.tx_reference,
-          message: "Demande de paiement poussée sur le téléphone." 
+          message: "Demande de paiement envoyée. Veuillez valider sur votre téléphone." 
       });
     } else {
-      console.error("Erreur renvoyée par l'API PayGate:", paygateData);
+      console.error("Échec API PayGate:", paygateData);
       return res.status(400).json({ 
-          error: 'Le paiement a été rejeté ou le réseau est indisponible.', 
+          success: false,
+          error: paygateData.message || 'Le paiement a été rejeté ou le réseau est indisponible.', 
           details: paygateData 
       });
     }

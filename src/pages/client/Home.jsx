@@ -15,7 +15,7 @@ const Home = () => {
   const { addItem } = useCartStore();
   const navigate = useNavigate();
 
-  const categories = ['Tous', 'Fruitée', 'Authentique', 'Spéciale'];
+  const categories = ['Tous', 'Fruitée', 'Spéciale'];
 
   useEffect(() => {
     const fetchProducts = async () => {

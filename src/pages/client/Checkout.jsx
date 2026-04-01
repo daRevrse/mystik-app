@@ -47,49 +47,68 @@ const Checkout = () => {
     }
 
     setLoading(true);
-    const transactionId = Math.floor(Math.random() * 100000000).toString();
+    const transactionId = `MTK-${Math.floor(100000 + Math.random() * 900000)}`;
 
-    // 1. SIMULATION PAIEMENT (En attendant Paygate Global réel)
-    console.log("Simulation du paiement via", selectedNetwork);
-    
-    setTimeout(async () => {
-        try {
-            const orderData = {
-              customer: formData,
-              items,
-              total: grandTotal,
-              transaction_id: transactionId,
-              payment_status: 'Payé', // Statut simulé
-              payment_network: selectedNetwork,
-              delivery_requested: wantsDelivery,
-              date: new Date().toISOString()
-            };
-            
-            const newOrder = await api.createOrder(orderData);
-            
-            // [NOUVEAU] Appel du Backend Vercel pour envoyer une Notification Push (FCM v1)
-            try {
-               await fetch('/api/notify', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                     title: `🔥 Nouvelle Commande (${formatPrice(grandTotal)})`,
-                     body: `Client: ${formData.firstName} ${formData.lastName} | Paiement: ${selectedNetwork}`,
-                     token: localStorage.getItem('mystikAdminFCMToken') // Récupéré pour les tests locaux (même PC)
-                  })
-               });
-            } catch (pushErr) {
-               console.warn("Échec requête Push Admin:", pushErr);
-            }
+    try {
+        // 1. APPEL RÉEL PAYGATE GLOBAL
+        const paygateRes = await fetch('/api/paygate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                amount: grandTotal,
+                orderId: transactionId,
+                phone: formData.phone,
+                network: selectedNetwork
+            })
+        });
 
-            clearCart();
-            navigate('/success', { state: { order: newOrder } });
-        } catch (error) {
-            console.error("Erreur enregistrement commande", error);
-            alert("La simulation a fonctionné mais l'enregistrement local a échoué.");
-            setLoading(false);
+        const paygateData = await paygateRes.json();
+
+        if (!paygateRes.ok || !paygateData.success) {
+            throw new Error(paygateData.error || "Échec de l'initialisation du paiement.");
         }
-    }, 2500); // 2.5 secondes d'attente
+
+        // 2. LE PUSH A ÉTÉ ENVOYÉ - On procède à l'enregistrement de la commande
+        // Note: Dans un système de production, on attendrait le Webhook de confirmation.
+        // Ici, pour l'MVP, on valide dès que le téléphone a reçu la demande.
+        
+        const orderData = {
+          id: transactionId,
+          customer: formData,
+          items,
+          total: grandTotal,
+          transaction_id: paygateData.tx_reference || transactionId,
+          payment_status: 'Payé', 
+          payment_network: selectedNetwork,
+          delivery_requested: wantsDelivery,
+          date: new Date().toISOString()
+        };
+        
+        const newOrder = await api.createOrder(orderData);
+        
+        // 3. Notification Push Admin
+        try {
+           await fetch('/api/notify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                 title: `🔥 Nouvelle Commande (${formatPrice(grandTotal)})`,
+                 body: `Client: ${formData.firstName} ${formData.lastName} | Paiement: ${selectedNetwork}`,
+                 token: localStorage.getItem('mystikAdminFCMToken') 
+              })
+           });
+        } catch (pushErr) {
+           console.warn("Échec requête Push Admin:", pushErr);
+        }
+
+        clearCart();
+        navigate('/success', { state: { order: newOrder } });
+
+    } catch (error) {
+        console.error("Erreur Paiement/Commande:", error);
+        alert(`Erreur: ${error.message}`);
+        setLoading(false);
+    }
   };
 
   if (items.length === 0) {
@@ -273,7 +292,7 @@ const Checkout = () => {
                   className={`w-full mt-12 py-6 btn-primary shadow-2xl font-display italic tracking-widest text-lg ${!selectedNetwork ? 'opacity-40 grayscale cursor-not-allowed hover:scale-100 hover:shadow-none' : 'shadow-primary-500/30'}`}
                   disabled={loading || !selectedNetwork}
                 >
-                  {loading ? 'SIMULATION EN COURS...' : !selectedNetwork ? 'SÉLECTIONNEZ UN PAIEMENT' : (
+                  {loading ? 'COMMANDE EN COURS (VOIR TÉLÉPHONE)...' : !selectedNetwork ? 'SÉLECTIONNEZ UN PAIEMENT' : (
                     <span className="flex items-center justify-center">
                       COMMANDER VIA {selectedNetwork}
                       <ChevronRight className="ml-2 w-6 h-6" />
