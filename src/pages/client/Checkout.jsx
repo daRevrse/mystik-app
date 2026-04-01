@@ -66,6 +66,22 @@ const Checkout = () => {
             };
             
             const newOrder = await api.createOrder(orderData);
+            
+            // [NOUVEAU] Appel du Backend Vercel pour envoyer une Notification Push (FCM v1)
+            try {
+               await fetch('/api/notify', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                     title: `🔥 Nouvelle Commande (${formatPrice(grandTotal)})`,
+                     body: `Client: ${formData.firstName} ${formData.lastName} | Paiement: ${selectedNetwork}`,
+                     token: localStorage.getItem('mystikAdminFCMToken') // Récupéré pour les tests locaux (même PC)
+                  })
+               });
+            } catch (pushErr) {
+               console.warn("Échec requête Push Admin:", pushErr);
+            }
+
             clearCart();
             navigate('/success', { state: { order: newOrder } });
         } catch (error) {

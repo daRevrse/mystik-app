@@ -10,6 +10,7 @@ const Settings = () => {
   const [deliveryFee, setDeliveryFee] = useState(2000);
   const [saved, setSaved] = useState(false);
   const [fcmStatus, setFcmStatus] = useState('Non configuré');
+  const [fcmToken, setFcmToken] = useState('');
 
   useEffect(() => {
     const currentParam = localStorage.getItem('mystikPassword') || 'mystik2024';
@@ -40,6 +41,8 @@ const Settings = () => {
     const token = await requestNotificationPermission();
     if (token) {
       setFcmStatus('Activé');
+      setFcmToken(token);
+      localStorage.setItem('mystikAdminFCMToken', token); // Stockage pour dev local
     } else {
       setFcmStatus('Refusé ou erreur');
     }
@@ -148,6 +151,20 @@ const Settings = () => {
             <div className="p-4 bg-gray-50 border border-gray-100 italic">
                <span className="text-xs font-bold uppercase text-gray-400">Statut: </span>
                <span className="text-xs font-bold uppercase text-secondary ml-2">{fcmStatus}</span>
+               
+               {fcmToken && (
+                 <div className="mt-4 pt-4 border-t border-gray-200">
+                    <p className="text-[10px] uppercase text-amber-600 font-bold tracking-widest mb-2">Votre Token Administrateur :</p>
+                    <textarea 
+                       readOnly 
+                       value={fcmToken} 
+                       className="w-full h-24 p-2 text-[10px] font-mono text-gray-500 bg-gray-100 border border-gray-200 outline-none resize-none"
+                    />
+                    <p className="text-[9px] uppercase text-gray-400 mt-2 font-bold italic tracking-wider leading-relaxed">
+                      Copiez ce token et collez-le dans la variable <b>ADMIN_DEVICE_TOKEN</b> sur Vercel.
+                    </p>
+                 </div>
+               )}
             </div>
             <Button 
                 onClick={handleEnableFCM}
