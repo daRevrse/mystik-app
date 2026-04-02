@@ -42,6 +42,7 @@ export default defineConfig({
         changeOrigin: true,
         secure: false
       },
+      // API routes (/api/*) are now handled by Vercel Dev automatically.
       '/cinetpay-api': {
         target: 'https://api.cinetpay.net',
         changeOrigin: true,

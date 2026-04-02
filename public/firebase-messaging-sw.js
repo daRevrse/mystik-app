@@ -16,7 +16,7 @@ try {
   const messaging = firebase.messaging();
 
   messaging.onBackgroundMessage((payload) => {
-    console.log('[firebase-messaging-sw.js] Notification reçue en background: ', payload);
+    // console.log('[firebase-messaging-sw.js] Notification reçue en background: ', payload);
     const notificationTitle = payload.notification?.title || 'Mystik';
     const notificationOptions = {
       body: payload.notification?.body || 'Nouvelle notification !',
