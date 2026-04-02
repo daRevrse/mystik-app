@@ -34,10 +34,10 @@ const Success = () => {
     );
   }
 
+  const isPaid = order.payment_status === 'Payé';
+
   const handleDownloadReceipt = async () => {
-    // S'assurer que le paymentStatus est présent (les commandes clients sont payées via Mobile Money/etc)
-    const orderWithStatus = { ...order, paymentStatus: 'Payé' };
-    await ReceiptService.generatePDF(orderWithStatus);
+    await ReceiptService.generatePDF(order);
   };
 
   return (
@@ -51,16 +51,32 @@ const Success = () => {
           </div>
           
           <h1 className="text-5xl md:text-7xl font-display font-bold text-secondary mb-6 uppercase italic leading-none">
-            L'Esprit <span className="text-primary-500">vous remercie !</span>
+            {isPaid ? "L'Esprit vous remercie !" : "Votre Facture Mystik"}
           </h1>
-          <p className="text-gray-400 mb-12 font-bold italic opacity-80 uppercase tracking-[0.3em] text-xs">
-            VOTRE COMMANDE <span className="text-secondary underline decoration-primary-500">{order.id}</span> A ÉTÉ VALIDÉE AVEC SUCCÈS.
+          <p className="text-gray-400 mb-6 font-bold italic opacity-80 uppercase tracking-[0.3em] text-xs">
+            {isPaid 
+                ? `VOTRE COMMANDE ${order.id} A ÉTÉ VALIDÉE AVEC SUCCÈS.` 
+                : `VOTRE FACTURE ${order.id} EST PRÊTE À ÊTRE RÉGLÉE.`}
           </p>
+
+          {!isPaid && (
+            <div className="mb-10 p-6 bg-amber-50 border border-amber-100 max-w-md mx-auto">
+                <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest leading-relaxed">
+                   Mode: Paiement à la livraison <br/>
+                   Veuillez préparer le montant exact de {formatPrice(order.total)} pour le livreur.
+                </p>
+                {order.delivery_requested && (
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-2">
+                    * Les frais de livraison sont en sus et à régler directement au livreur.
+                  </p>
+                )}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-lg mx-auto mb-16">
             <Button variant="outline" className="w-full flex items-center justify-center border-gray-200 py-4 font-bold tracking-widest uppercase italic text-xs" onClick={handleDownloadReceipt}>
               <Download className="w-4 h-4 mr-3 text-amber-500" />
-              TÉLÉCHARGER MON REÇU (PDF)
+              TÉLÉCHARGER {isPaid ? 'MON REÇU' : 'MA FACTURE'} (PDF)
             </Button>
             <Link to="/" className="w-full">
               <Button className="w-full btn-primary py-4 italic text-xs">
@@ -68,6 +84,7 @@ const Success = () => {
               </Button>
             </Link>
           </div>
+
 
           <div className="pt-10 border-t border-gray-50 flex flex-col md:flex-row justify-around items-center gap-10">
             <div className="text-center">

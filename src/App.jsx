@@ -8,6 +8,7 @@ import Dashboard from './pages/admin/Dashboard';
 import Orders from './pages/admin/Orders';
 import AdminProducts from './pages/admin/Products';
 import Settings from './pages/admin/Settings';
+import Caisse from './pages/admin/Caisse';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
 import AdminLayout from './components/common/AdminLayout';
@@ -46,6 +47,7 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="orders" element={<Orders />} />
             <Route path="products" element={<AdminProducts />} />
+            <Route path="caisse" element={<Caisse />} />
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>

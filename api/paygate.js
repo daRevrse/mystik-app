@@ -51,17 +51,23 @@ export default async function handler(req, res) {
     console.log("PayGate Response Data:", paygateData);
 
     // 5. Vérification du succès immédiat (Le push a été envoyé)
-    if (paygateRes.ok && paygateData.status === 0 && paygateData.tx_reference) {
+    // PayGate Global v1 : status 0 = succès du push
+    if (paygateRes.ok && paygateData.status === 0) {
       return res.status(200).json({ 
           success: true,
-          tx_reference: paygateData.tx_reference,
+          tx_reference: paygateData.tx_reference || paygateData.token, // Certains comptes utilisent 'token'
           message: "Demande de paiement envoyée. Veuillez valider sur votre téléphone." 
       });
     } else {
       console.error("Échec API PayGate:", paygateData);
-      return res.status(400).json({ 
+      
+      // Extraction d'un message d'erreur plus précis
+      const errorMessage = paygateData.message || paygateData.description || paygateData.error || 'Le paiement a été rejeté ou le réseau est indisponible.';
+      
+      return res.status(paygateRes.ok ? 400 : paygateRes.status).json({ 
           success: false,
-          error: paygateData.message || 'Le paiement a été rejeté ou le réseau est indisponible.', 
+          error: errorMessage,
+          status_code: paygateData.status,
           details: paygateData 
       });
     }

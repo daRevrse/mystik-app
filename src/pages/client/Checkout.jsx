@@ -25,8 +25,7 @@ const Checkout = () => {
   const [selectedNetwork, setSelectedNetwork] = useState(null);
 
   const cartTotal = getCartTotal();
-  const deliveryFee = parseInt(localStorage.getItem('mystikDeliveryFee') || '2000');
-  const grandTotal = cartTotal + (wantsDelivery ? deliveryFee : 0);
+  const grandTotal = cartTotal; // Les frais de livraison sont à la charge du client à la réception
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -42,7 +41,7 @@ const Checkout = () => {
     if (items.length === 0) return;
     
     if (!selectedNetwork) {
-       alert("Veuillez sélectionner un réseau mobile (T-Money ou Flooz) pour procéder au paiement.");
+       alert("Veuillez sélectionner un mode de paiement pour procéder.");
        return;
     }
 
@@ -50,35 +49,43 @@ const Checkout = () => {
     const transactionId = `MTK-${Math.floor(100000 + Math.random() * 900000)}`;
 
     try {
-        // 1. APPEL RÉEL PAYGATE GLOBAL
-        const paygateRes = await fetch('/api/paygate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                amount: grandTotal,
-                orderId: transactionId,
-                phone: formData.phone,
-                network: selectedNetwork
-            })
-        });
+        let paymentStatus = 'Payé';
+        let txRef = transactionId;
 
-        const paygateData = await paygateRes.json();
+        // 1. GESTION DES MODES DE PAIEMENT
+        if (selectedNetwork !== 'COD') {
+            // APPEL RÉEL PAYGATE GLOBAL
+            const paygateRes = await fetch('/api/paygate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: grandTotal,
+                    orderId: transactionId,
+                    phone: formData.phone,
+                    network: selectedNetwork
+                })
+            });
 
-        if (!paygateRes.ok || !paygateData.success) {
-            throw new Error(paygateData.error || "Échec de l'initialisation du paiement.");
+            const paygateData = await paygateRes.json();
+
+            if (!paygateRes.ok || !paygateData.success) {
+                throw new Error(paygateData.error || "Échec de l'initialisation du paiement.");
+            }
+            txRef = paygateData.tx_reference || transactionId;
+        } else {
+            // CASH ON DELIVERY
+            paymentStatus = 'Non Payé';
+            txRef = 'Paiement à la livraison';
         }
 
-        // 2. LE PUSH A ÉTÉ ENVOYÉ - On procède à l'enregistrement de la commande
-        // Note: Dans un système de production, on attendrait le Webhook de confirmation.
-        // Ici, pour l'MVP, on valide dès que le téléphone a reçu la demande.
-        
+        // 2. ENREGISTREMENT DE LA COMMANDE
         const orderData = {
           id: transactionId,
           customer: formData,
           items,
           total: grandTotal,
-          transaction_id: paygateData.tx_reference || transactionId,
-          payment_status: 'Payé', 
+          transaction_id: txRef,
+          paymentStatus: paymentStatus, 
           payment_network: selectedNetwork,
           delivery_requested: wantsDelivery,
           date: new Date().toISOString()
@@ -92,8 +99,8 @@ const Checkout = () => {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                 title: `🔥 Nouvelle Commande (${formatPrice(grandTotal)})`,
-                 body: `Client: ${formData.firstName} ${formData.lastName} | Paiement: ${selectedNetwork}`,
+                 title: `🔥 ${selectedNetwork === 'COD' ? 'Nouvelle Facture' : 'Nouvelle Commande'} (${formatPrice(grandTotal)})`,
+                 body: `Client: ${formData.firstName} ${formData.lastName} | Paiement: ${selectedNetwork === 'COD' ? 'À la livraison' : selectedNetwork}`,
                  token: localStorage.getItem('mystikAdminFCMToken') 
               })
            });
@@ -101,12 +108,26 @@ const Checkout = () => {
            console.warn("Échec requête Push Admin:", pushErr);
         }
 
+        // 4. Envoi Email Copie (Simulé)
+        try {
+           await fetch('/api/send-email', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                 order: newOrder,
+                 type: selectedNetwork === 'COD' ? 'invoice' : 'receipt'
+              })
+           });
+        } catch (emailErr) {
+           console.warn("Échec envoi email:", emailErr);
+        }
+
         clearCart();
         navigate('/success', { state: { order: newOrder } });
 
     } catch (error) {
         console.error("Erreur Paiement/Commande:", error);
-        alert(`Erreur: ${error.message}`);
+        alert(`ÉCHEC DE LA COMMANDE : \n${error.message}`);
         setLoading(false);
     }
   };
@@ -174,8 +195,8 @@ const Checkout = () => {
                        className="w-5 h-5 text-primary-500 accent-primary-500 rounded-none border-gray-300" 
                     />
                     <div>
-                        <span className="block text-sm font-bold text-secondary tracking-widest uppercase italic group-hover:text-primary-600 transition-colors">Je souhaite être livré (+ {formatPrice(deliveryFee)})</span>
-                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed block mt-1">Si vous décochez, vous viendrez récupérer votre commande.</span>
+                        <span className="block text-sm font-bold text-secondary tracking-widest uppercase italic group-hover:text-primary-600 transition-colors">Je souhaite être livré</span>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed block mt-1">Les frais de livraison sont à votre charge et à régler au livreur.</span>
                     </div>
                   </label>
                 </div>
@@ -205,26 +226,41 @@ const Checkout = () => {
                 <h3 className="text-2xl font-display font-bold italic tracking-tight uppercase">Paiement & Sécurité</h3>
               </div>
               <div className="p-10 bg-[#fafaf9] border-2 border-dashed border-gray-100 flex flex-col items-center justify-center text-center space-y-6">
-                <div className="flex space-x-6 justify-center w-full">
+                <div className="grid grid-cols-3 gap-6 w-full">
                   <button 
                       type="button" 
                       onClick={() => setSelectedNetwork('FLOOZ')}
-                      className={`w-24 h-24 rounded-full overflow-hidden border-[6px] transition-all duration-300 shadow-xl ${selectedNetwork === 'FLOOZ' ? 'border-primary-500 scale-110 shadow-primary-500/30' : 'border-white hover:border-gray-200 opacity-50 hover:opacity-100'}`}>
-                      <img src="/images/moov.jpg" alt="Flooz" className="w-full h-full object-cover" />
+                      className={`flex flex-col items-center gap-3 p-4 rounded-xl transition-all duration-300 shadow-sm ${selectedNetwork === 'FLOOZ' ? 'bg-white ring-4 ring-primary-500 scale-105' : 'bg-white/50 grayscale opacity-60 hover:opacity-100 hover:grayscale-0'}`}>
+                      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-100 shadow-md">
+                        <img src="/images/moov.jpg" alt="Flooz" className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-widest">Flooz</span>
                   </button>
                   <button 
                       type="button" 
                       onClick={() => setSelectedNetwork('TMONEY')}
-                      className={`w-24 h-24 rounded-full overflow-hidden border-[6px] transition-all duration-300 shadow-xl ${selectedNetwork === 'TMONEY' ? 'border-primary-500 scale-110 shadow-primary-500/30' : 'border-white hover:border-gray-200 opacity-50 hover:opacity-100'}`}>
-                      <img src="/images/yas.jpg" alt="T-Money" className="w-full h-full object-cover" />
+                      className={`flex flex-col items-center gap-3 p-4 rounded-xl transition-all duration-300 shadow-sm ${selectedNetwork === 'TMONEY' ? 'bg-white ring-4 ring-primary-500 scale-105' : 'bg-white/50 grayscale opacity-60 hover:opacity-100 hover:grayscale-0'}`}>
+                      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-100 shadow-md">
+                        <img src="/images/yas.jpg" alt="T-Money" className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-widest">T-Money</span>
+                  </button>
+                  <button 
+                      type="button" 
+                      onClick={() => setSelectedNetwork('COD')}
+                      className={`flex flex-col items-center gap-3 p-4 rounded-xl transition-all duration-300 shadow-sm ${selectedNetwork === 'COD' ? 'bg-white ring-4 ring-primary-500 scale-105' : 'bg-white/50 grayscale opacity-60 hover:opacity-100 hover:grayscale-0'}`}>
+                      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-100 shadow-md bg-secondary text-white flex items-center justify-center">
+                        <Truck className="w-8 h-8" />
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-widest">À la livraison</span>
                   </button>
                 </div>
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] leading-relaxed italic opacity-80 max-w-sm mt-4">
-                  {selectedNetwork 
-                      ? <span className="text-primary-600 block mb-2 text-xs">Validation en cours : {selectedNetwork}</span>
-                      : "Sélectionnez le compte Mobile Money qui sera débité pour votre commande."}
-                  <br/>
-                  (Mode Simulation PayGate Global Activé)
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] leading-relaxed italic opacity-80 max-w-sm mt-4">
+                  {selectedNetwork === 'COD' 
+                      ? <span className="text-primary-600 block mb-2 text-xs">Paiement à réception des bouteilles</span>
+                      : selectedNetwork 
+                      ? <span className="text-primary-600 block mb-2 text-xs">Validation Mobile Money ({selectedNetwork})</span>
+                      : "Sélectionnez votre mode de règlement préféré."}
                 </p>
               </div>
             </Card>
@@ -273,10 +309,10 @@ const Checkout = () => {
                   {wantsDelivery && (
                     <div className="flex justify-between text-[10px] font-bold text-gray-400 tracking-[0.2em] uppercase italic opacity-60">
                       <span className="flex items-center">
-                        Livraison Standard 🇹🇬
+                        Expédition locale
                         <Truck className="w-4 h-4 ml-3" />
                       </span>
-                      <span className="text-secondary">{formatPrice(deliveryFee)}</span>
+                      <span className="text-primary-500">À votre charge</span>
                     </div>
                   )}
                   <div className="flex justify-between text-3xl font-display font-bold pt-8 text-secondary uppercase italic leading-none border-t border-gray-50 mt-4">
@@ -292,13 +328,14 @@ const Checkout = () => {
                   className={`w-full mt-12 py-6 btn-primary shadow-2xl font-display italic tracking-widest text-lg ${!selectedNetwork ? 'opacity-40 grayscale cursor-not-allowed hover:scale-100 hover:shadow-none' : 'shadow-primary-500/30'}`}
                   disabled={loading || !selectedNetwork}
                 >
-                  {loading ? 'COMMANDE EN COURS (VOIR TÉLÉPHONE)...' : !selectedNetwork ? 'SÉLECTIONNEZ UN PAIEMENT' : (
+                  {loading ? 'COMMANDE EN COURS...' : !selectedNetwork ? 'CHOISIR UN PAIEMENT' : (
                     <span className="flex items-center justify-center">
-                      COMMANDER VIA {selectedNetwork}
+                      {selectedNetwork === 'COD' ? 'CONFIRMER LA COMMANDE' : `PAYER VIA ${selectedNetwork}`}
                       <ChevronRight className="ml-2 w-6 h-6" />
                     </span>
                   )}
                 </Button>
+
 
                 <div className="mt-10 pt-10 border-t border-gray-50 flex justify-center gap-10 opacity-30 grayscale saturate-0">
                   <ShieldCheck className="w-6 h-6" />

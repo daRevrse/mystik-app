@@ -1,4 +1,6 @@
 import { initializeApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 
 // TODO: Remplacer ces valeurs par celles de votre projet Firebase
@@ -13,6 +15,8 @@ const firebaseConfig = {
 
 // Seule la configuration est initialisée
 const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const storage = getStorage(app);
 const messaging = getMessaging(app);
 
 export const requestNotificationPermission = async () => {
@@ -48,4 +52,4 @@ export const onMessageListener = () =>
     });
   });
 
-export { messaging };
+export { messaging, db, storage };

@@ -19,6 +19,10 @@ const Product = () => {
       setLoading(true);
       try {
         const data = await api.getProductById(id);
+        if (data.isActive === false) {
+           navigate('/');
+           return;
+        }
         setProduct(data);
       } catch (error) {
         console.error("Produit non trouvé", error);

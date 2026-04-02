@@ -34,10 +34,11 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
+    const activeProducts = products.filter(p => p.isActive !== false);
     if (activeCategory === 'Tous') {
-      setFilteredProducts(products);
+      setFilteredProducts(activeProducts);
     } else {
-      setFilteredProducts(products.filter(p => p.category === activeCategory));
+      setFilteredProducts(activeProducts.filter(p => p.category === activeCategory));
     }
   }, [activeCategory, products]);
 

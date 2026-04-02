@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Coffee, ArrowLeft, Settings } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Coffee, ArrowLeft, Settings, Wallet } from 'lucide-react';
 import { useAdminStore } from '../../store/useAdminStore';
 
 const AdminLayout = () => {
@@ -25,6 +25,7 @@ const AdminLayout = () => {
     { icon: LayoutDashboard, label: 'Tableau de Bord', path: '/admin' },
     { icon: ShoppingCart, label: 'Commandes', path: '/admin/orders', badge: newOrdersCount },
     { icon: Coffee, label: 'Produits', path: '/admin/products' },
+    { icon: Wallet, label: 'Caisse', path: '/admin/caisse' },
     { icon: Settings, label: 'Paramètres', path: '/admin/settings' },
   ];
 

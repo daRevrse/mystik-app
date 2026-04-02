@@ -1,11 +1,25 @@
+import { 
+  collection, 
+  getDocs, 
+  getDoc, 
+  addDoc, 
+  updateDoc, 
+  doc, 
+  query, 
+  where, 
+  orderBy, 
+  setDoc,
+  serverTimestamp 
+} from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../utils/firebase';
+
 /**
- * Service Layer - Mock API MYSTIK 🇹🇬
- * Simulation d'un backend asynchrone avec persistance LocalStorage.
+ * Service Layer - API MYSTIK 🇹🇬
+ * Migration vers Firebase Firestore pour la persistance réelle.
  */
 
-const DELAY = 300;
-
-// Données réelles MYSTIK pour la démonstration
+// Données réelles MYSTIK pour l'initialisation si Firestore est vide
 const INITIAL_PRODUCTS = [
   {
     id: 'm1',
@@ -87,133 +101,179 @@ const INITIAL_PRODUCTS = [
   }
 ];
 
-// Utilitaires LocalStorage
-const STORAGE_KEYS = {
-  PRODUCTS: 'mystik_products_v4',
-  ORDERS: 'mystik_orders_v4'
-};
-
-const getFromStorage = (key, initialValue) => {
-  const data = localStorage.getItem(key);
-  return data ? JSON.parse(data) : initialValue;
-};
-
-const saveToStorage = (key, data) => {
-  localStorage.setItem(key, JSON.stringify(data));
-};
-
-// --- INITIALISATION ---
-// On force la réinitialisation si c'est la première fois qu'on charge avec Mystik
-if (!localStorage.getItem(STORAGE_KEYS.PRODUCTS)) {
-  saveToStorage(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
-}
-if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) {
-  saveToStorage(STORAGE_KEYS.ORDERS, []);
-}
+const INITIAL_ORDERS = [
+  {
+    id: 'MTK-8821',
+    customer: { firstName: 'Kodjo', lastName: 'Agbéyomé', city: 'Lomé' },
+    items: [INITIAL_PRODUCTS[0]],
+    total: 27500,
+    status: 'Livrée',
+    paymentStatus: 'Payé',
+    date: new Date(Date.now() - 86400000 * 2).toISOString()
+  },
+  {
+    id: 'MTK-4532',
+    customer: { firstName: 'Afiwa', lastName: 'Mensah', city: 'Kpalimé' },
+    items: [INITIAL_PRODUCTS[2]],
+    total: 12500,
+    status: 'En préparation',
+    paymentStatus: 'Non payé',
+    date: new Date(Date.now() - 86400000).toISOString()
+  }
+];
 
 // --- API FUNCTIONS ---
 
 export const api = {
   // Produits
   getProducts: async () => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(getFromStorage(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS));
-      }, DELAY);
-    });
+    try {
+      const querySnapshot = await getDocs(collection(db, 'products'));
+      let products = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+      
+      if (products.length === 0) {
+        for (const p of INITIAL_PRODUCTS) {
+          const { id, ...data } = p;
+          await setDoc(doc(db, 'products', id), data);
+        }
+        return INITIAL_PRODUCTS;
+      }
+      return products;
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      throw error;
+    }
   },
 
   getProductById: async (id) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const products = getFromStorage(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
-        const product = products.find(p => p.id === id);
-        product ? resolve(product) : reject(new Error('Produit non trouvé'));
-      }, DELAY);
-    });
+    try {
+      const docRef = doc(db, 'products', id);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return { ...docSnap.data(), id: docSnap.id };
+      } else {
+        throw new Error('Produit non trouvé');
+      }
+    } catch (error) {
+      console.error("Error fetching product:", error);
+      throw error;
+    }
   },
 
   updateProduct: async (updatedProduct) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const products = getFromStorage(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
-        const index = products.findIndex(p => p.id === updatedProduct.id);
-        if (index !== -1) {
-          products[index] = updatedProduct;
-          saveToStorage(STORAGE_KEYS.PRODUCTS, products);
-        }
-        resolve(updatedProduct);
-      }, DELAY);
-    });
+    try {
+      const { id, ...data } = updatedProduct;
+      const docRef = doc(db, 'products', id);
+      await updateDoc(docRef, data);
+      return updatedProduct;
+    } catch (error) {
+      console.error("Error updating product:", error);
+      throw error;
+    }
+  },
+
+  createProduct: async (productData) => {
+    try {
+      // Si l'ID n'est pas fourni (ex: nouveau produit), on utilise son nom nettoyé ou un ID auto
+      const productId = productData.id || productData.name.toLowerCase().replace(/\s+/g, '-');
+      const newProduct = {
+        ...productData,
+        id: productId,
+        isActive: true, // Par défaut actif
+        createdAt: serverTimestamp()
+      };
+      await setDoc(doc(db, 'products', productId), newProduct);
+      return newProduct;
+    } catch (error) {
+      console.error("Error creating product:", error);
+      throw error;
+    }
+  },
+
+  uploadProductImage: async (file) => {
+    try {
+      const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      return downloadURL;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      throw error;
+    }
   },
 
   // Commandes
   getOrders: async () => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const orders = getFromStorage(STORAGE_KEYS.ORDERS, []);
-        // Si vide, on crée quelques exemples
-        if (orders.length === 0) {
-          const mockupOrders = [
-            {
-              id: 'MTK-8821',
-              customer: { firstName: 'Kodjo', lastName: 'Agbéyomé', city: 'Lomé' },
-              items: [INITIAL_PRODUCTS[0], INITIAL_PRODUCTS[1]],
-              total: 27500,
-              status: 'Livrée',
-              paymentStatus: 'Payé',
-              date: new Date(Date.now() - 86400000 * 2).toISOString()
-            },
-            {
-              id: 'MTK-4532',
-              customer: { firstName: 'Afiwa', lastName: 'Mensah', city: 'Kpalimé' },
-              items: [INITIAL_PRODUCTS[2]],
-              total: 12500,
-              status: 'En préparation',
-              paymentStatus: 'Non payé',
-              date: new Date(Date.now() - 86400000).toISOString()
-            }
-          ];
-          saveToStorage(STORAGE_KEYS.ORDERS, mockupOrders);
-          resolve(mockupOrders);
-        } else {
-          resolve(orders);
+    try {
+      const q = query(collection(db, 'orders'), orderBy('date', 'desc'));
+      const querySnapshot = await getDocs(q);
+      let orders = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return { 
+          ...data, 
+          id: doc.id,
+          // Normalisation pour l'interface admin
+          paymentStatus: data.paymentStatus || data.payment_status || 'Non payé'
+        };
+      });
+
+      if (orders.length === 0) {
+        for (const o of INITIAL_ORDERS) {
+          const { id, ...data } = o;
+          await setDoc(doc(db, 'orders', id), data);
         }
-      }, DELAY);
-    });
+        return INITIAL_ORDERS;
+      }
+      return orders;
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      throw error;
+    }
   },
 
   createOrder: async (orderData) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const orders = getFromStorage(STORAGE_KEYS.ORDERS, []);
-        const newOrder = {
-          ...orderData,
-          id: `MTK-${Math.floor(1000 + Math.random() * 9000)}`,
-          status: orderData.status || 'En attente',
-          paymentStatus: orderData.paymentStatus || 'Non payé',
-          date: new Date().toISOString()
-        };
-        orders.push(newOrder);
-        saveToStorage(STORAGE_KEYS.ORDERS, orders);
-        resolve(newOrder);
-      }, DELAY);
-    });
+    try {
+      // On utilise l'ID déjà généré par le Checkout si présent, sinon on en crée un
+      const orderId = orderData.id || `MTK-${Math.floor(100000 + Math.random() * 900000)}`;
+      
+      const newOrder = {
+        ...orderData,
+        id: orderId, // On force la cohérence
+        status: orderData.status || 'En attente',
+        paymentStatus: orderData.paymentStatus || orderData.payment_status || 'Non payé',
+        date: orderData.date || new Date().toISOString(),
+        createdAt: serverTimestamp()
+      };
+      
+      await setDoc(doc(db, 'orders', orderId), newOrder);
+      return newOrder;
+    } catch (error) {
+      console.error("Error creating order:", error);
+      throw error;
+    }
   },
 
   updateOrderStatus: async (orderId, status) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const orders = getFromStorage(STORAGE_KEYS.ORDERS, []);
-        const index = orders.findIndex(o => o.id === orderId);
-        if (index !== -1) {
-          orders[index].status = status;
-          saveToStorage(STORAGE_KEYS.ORDERS, orders);
-          resolve(orders[index]);
-        } else {
-          reject(new Error('Commande non trouvée'));
-        }
-      }, DELAY);
-    });
+    try {
+      const docRef = doc(db, 'orders', orderId);
+      await updateDoc(docRef, { status });
+      const updatedSnap = await getDoc(docRef);
+      return { ...updatedSnap.data(), id: updatedSnap.id };
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      throw error;
+    }
+  },
+
+  updateOrderPaymentStatus: async (orderId, paymentStatus) => {
+    try {
+      const docRef = doc(db, 'orders', orderId);
+      await updateDoc(docRef, { paymentStatus });
+      const updatedSnap = await getDoc(docRef);
+      return { ...updatedSnap.data(), id: updatedSnap.id };
+    } catch (error) {
+      console.error("Error updating order payment status:", error);
+      throw error;
+    }
   }
 };
