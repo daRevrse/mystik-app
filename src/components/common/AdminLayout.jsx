@@ -25,7 +25,7 @@ const AdminLayout = () => {
     { icon: LayoutDashboard, label: 'Tableau de Bord', path: '/admin' },
     { icon: ShoppingCart, label: 'Commandes', path: '/admin/orders', badge: newOrdersCount },
     { icon: Coffee, label: 'Produits', path: '/admin/products' },
-    { icon: Wallet, label: 'Caisse', path: '/admin/caisse' },
+    // { icon: Wallet, label: 'Caisse', path: '/admin/caisse' },
     { icon: Settings, label: 'Paramètres', path: '/admin/settings' },
   ];
 

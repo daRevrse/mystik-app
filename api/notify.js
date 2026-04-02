@@ -27,14 +27,27 @@ export default async function handler(req, res) {
     try {
         const { title, body } = req.body;
         
-        // 1. Récupération du Token Cible
-        // Par défaut, on cherche dans la requête (si test local). 
-        // Sinon, on cherche sur le Serveur Vercel (si en Prod).
-        const targetToken = req.body.token || process.env.ADMIN_DEVICE_TOKEN;
+        // 1. Récupération du Token Cible via Firestore (Évite le .env)
+        let targetToken = req.body.token;
+        
+        if (!targetToken) {
+            try {
+                const settingsDoc = await admin.firestore().doc('settings/notifications').get();
+                if (settingsDoc.exists) {
+                    targetToken = settingsDoc.data().adminToken;
+                    console.log("Token récupéré depuis Firestore.");
+                }
+            } catch (dbErr) {
+                console.error("Erreur récupération token Firestore:", dbErr);
+            }
+        }
+
+        // Fallback ultime (optionnel)
+        if (!targetToken) targetToken = process.env.ADMIN_DEVICE_TOKEN;
 
         if (!targetToken) {
-            console.error("Aucun Token FCM (Device) trouvé. Impossible d'envoyer la notification.");
-            return res.status(400).json({ success: false, message: "Token (ADMIN_DEVICE_TOKEN) manquant." });
+            console.error("Aucun Token FCM trouvé dans Firestore ou dans la requête.");
+            return res.status(400).json({ success: false, message: "Token manquant." });
         }
 
         if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_PRIVATE_KEY) {

@@ -25,7 +25,8 @@ const Checkout = () => {
   const [selectedNetwork, setSelectedNetwork] = useState(null);
 
   const cartTotal = getCartTotal();
-  const grandTotal = cartTotal; // Les frais de livraison sont à la charge du client à la réception
+  const transactionFee = (selectedNetwork === 'FLOOZ' || selectedNetwork === 'TMONEY') ? 500 : 0;
+  const grandTotal = cartTotal + transactionFee; // Les frais de livraison sont à la charge du client à la réception
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -313,6 +314,12 @@ const Checkout = () => {
                         <Truck className="w-4 h-4 ml-3" />
                       </span>
                       <span className="text-primary-500">À votre charge</span>
+                    </div>
+                  )}
+                  {transactionFee > 0 && (
+                    <div className="flex justify-between text-[10px] font-bold text-gray-400 tracking-[0.2em] uppercase italic opacity-60 animate-fade-in">
+                      <span>Frais de service mobile</span>
+                      <span className="text-secondary">+{formatPrice(transactionFee)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-3xl font-display font-bold pt-8 text-secondary uppercase italic leading-none border-t border-gray-50 mt-4">

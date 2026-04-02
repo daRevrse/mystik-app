@@ -140,7 +140,7 @@ const AdminProducts = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
         <div>
           <div className="flex items-center gap-3 mb-4">
-             <h1 className="text-3xl font-display font-bold text-secondary tracking-tighter uppercase italic leading-none underline decoration-amber-500 decoration-8 underline-offset-8">
+             <h1 className="text-2xl md:text-3xl font-display font-bold text-secondary tracking-tighter uppercase italic leading-none underline decoration-amber-500 decoration-4 md:decoration-8 underline-offset-4 md:underline-offset-8">
                Trésors du <span className="text-amber-500">CATALOGUE</span>
              </h1>
           </div>
@@ -299,14 +299,14 @@ const AdminProducts = () => {
       {showAddModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-secondary/80 backdrop-blur-md animate-in fade-in duration-300">
            <div className="bg-white w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
-              <div className="bg-secondary p-8 text-white flex justify-between items-center">
-                <h2 className="text-3xl font-display font-bold italic uppercase tracking-tight">Nouvelle <span className="text-amber-500">LÉGENDE</span></h2>
+            <div className="bg-secondary p-6 md:p-8 text-white flex justify-between items-center">
+                <h2 className="text-2xl md:text-3xl font-display font-bold italic uppercase tracking-tight">Nouvelle <span className="text-amber-500">LÉGENDE</span></h2>
                 <button onClick={() => setShowAddModal(false)} className="hover:text-amber-500 transition-colors">
-                    <X className="w-8 h-8" />
+                    <X className="w-6 h-6 md:w-8 md:h-8" />
                 </button>
               </div>
               
-              <form onSubmit={handleAddProduct} className="p-8 space-y-8 overflow-y-auto max-h-[70vh]">
+              <form onSubmit={handleAddProduct} className="p-4 md:p-8 space-y-6 md:space-y-8 overflow-y-auto max-h-[75vh]">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Image Upload Area */}
                     <div className="md:col-span-2">
@@ -367,11 +367,11 @@ const AdminProducts = () => {
                 </div>
               </form>
 
-              <div className="p-8 bg-gray-50 flex gap-4">
-                <Button onClick={() => setShowAddModal(false)} variant="outline" className="flex-1 italic" disabled={uploading}>ANNULER</Button>
+              <div className="p-4 md:p-8 bg-gray-50 flex gap-4">
+                <Button onClick={() => setShowAddModal(false)} variant="outline" className="flex-1 italic py-4 md:py-3" disabled={uploading}>ANNULER</Button>
                 <Button 
                     onClick={handleAddProduct} 
-                    className="flex-1 bg-secondary text-white hover:bg-amber-500 border-none italic shadow-xl flex items-center justify-center gap-2"
+                    className="flex-1 bg-secondary text-white hover:bg-amber-500 border-none italic shadow-xl flex items-center justify-center gap-2 py-4 md:py-3"
                     disabled={uploading}
                 >
                     {uploading ? (
@@ -392,15 +392,15 @@ const AdminProducts = () => {
       {showReplenishModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-secondary/80 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-white w-full max-w-3xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom-10 duration-500">
-            <div className="bg-amber-500 p-8 flex justify-between items-center">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-secondary text-white flex items-center justify-center rounded-none shadow-lg">
-                  <TrendingUp className="w-7 h-7" />
+            <div className="bg-amber-500 p-6 md:p-8 flex justify-between items-center">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-secondary text-white flex items-center justify-center rounded-none shadow-lg">
+                  <TrendingUp className="w-6 h-6 md:w-7 md:h-7" />
                 </div>
-                <h2 className="text-3xl font-display font-bold italic uppercase tracking-tight text-secondary">Réapprovisionnement <span className="text-white">MYSTIK</span></h2>
+                <h2 className="text-xl md:text-3xl font-display font-bold italic uppercase tracking-tight text-secondary">Réapprovisionnement <span className="text-white">MYSTIK</span></h2>
               </div>
               <button onClick={() => setShowReplenishModal(false)} className="text-secondary hover:text-white transition-colors">
-                <X className="w-8 h-8" />
+                <X className="w-6 h-6 md:w-8 md:h-8" />
               </button>
             </div>
 
@@ -412,63 +412,67 @@ const AdminProducts = () => {
               
               <div className="space-y-4">
                 {products.map(p => (
-                  <div key={p.id} className="flex items-center gap-6 p-4 bg-gray-50 border border-gray-100 hover:border-amber-200 transition-colors group">
-                    <div className="w-14 h-14 shrink-0 bg-white border border-gray-200 overflow-hidden">
-                      <img src={p.image} className="w-full h-full object-cover" alt="" />
-                    </div>
-                    <div className="flex-grow">
-                      <h4 className="text-xs font-bold uppercase italic tracking-tighter text-secondary">{p.name}</h4>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] font-bold text-gray-400 uppercase">Actuel:</span>
-                        <span className="text-[10px] font-bold text-amber-600 underline underline-offset-2">{p.stock} Ut.</span>
-                      </div>
+                  <div key={p.id} className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 p-4 bg-gray-50 border border-gray-100 hover:border-amber-200 transition-colors group">
+                    <div className="flex items-center gap-4 flex-grow">
+                        <div className="w-14 h-14 shrink-0 bg-white border border-gray-200 overflow-hidden">
+                            <img src={p.image} className="w-full h-full object-cover" alt="" />
+                        </div>
+                        <div className="flex-grow">
+                            <h4 className="text-xs font-bold uppercase italic tracking-tighter text-secondary">{p.name}</h4>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase">Actuel:</span>
+                                <span className="text-[10px] font-bold text-amber-600 underline underline-offset-2">{p.stock} Ut.</span>
+                            </div>
+                        </div>
                     </div>
                     
-                    <div className="flex items-center gap-4 bg-white border border-gray-200 px-4 py-2 group-hover:border-amber-500 transition-colors">
-                      <button 
-                        onClick={() => setReplenishQuantities(prev => ({ ...prev, [p.id]: (prev[p.id] || 0) - 1 }))}
-                        className="text-red-500 hover:scale-110 transition-transform"
-                      >
-                        <MinusCircle className="w-5 h-5" />
-                      </button>
-                      
-                      <div className="w-16 text-center">
-                        <input 
-                          type="number"
-                          placeholder="0"
-                          value={replenishQuantities[p.id] || ''}
-                          onChange={(e) => setReplenishQuantities(prev => ({ ...prev, [p.id]: parseInt(e.target.value) || 0 }))}
-                          className="w-full text-sm font-bold text-center focus:outline-none"
-                        />
-                      </div>
+                    <div className="flex items-center justify-between sm:justify-end gap-6 sm:gap-4">
+                        <div className="flex items-center gap-4 bg-white border border-gray-200 px-4 py-2 group-hover:border-amber-500 transition-colors">
+                            <button 
+                                onClick={() => setReplenishQuantities(prev => ({ ...prev, [p.id]: (prev[p.id] || 0) - 1 }))}
+                                className="text-red-500 hover:scale-110 transition-transform"
+                            >
+                                <MinusCircle className="w-5 h-5" />
+                            </button>
+                            
+                            <div className="w-16 text-center">
+                                <input 
+                                type="number"
+                                placeholder="0"
+                                value={replenishQuantities[p.id] || ''}
+                                onChange={(e) => setReplenishQuantities(prev => ({ ...prev, [p.id]: parseInt(e.target.value) || 0 }))}
+                                className="w-full text-sm font-bold text-center focus:outline-none"
+                                />
+                            </div>
 
-                      <button 
-                        onClick={() => setReplenishQuantities(prev => ({ ...prev, [p.id]: (prev[p.id] || 0) + 1 }))}
-                        className="text-emerald-500 hover:scale-110 transition-transform"
-                      >
-                        <PlusCircle className="w-5 h-5" />
-                      </button>
-                    </div>
+                            <button 
+                                onClick={() => setReplenishQuantities(prev => ({ ...prev, [p.id]: (prev[p.id] || 0) + 1 }))}
+                                className="text-emerald-500 hover:scale-110 transition-transform"
+                            >
+                                <PlusCircle className="w-5 h-5" />
+                            </button>
+                        </div>
 
-                    <div className="min-w-[80px] text-right">
-                       <p className={`text-xs font-bold italic ${ (replenishQuantities[p.id] || 0) > 0 ? 'text-emerald-600' : (replenishQuantities[p.id] || 0) < 0 ? 'text-red-500' : 'text-gray-300'}`}>
-                          { (replenishQuantities[p.id] || 0) > 0 ? `+${replenishQuantities[p.id]}` : (replenishQuantities[p.id] || 0) }
-                       </p>
-                       <p className="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">Nouvel État: { (p.stock || 0) + (replenishQuantities[p.id] || 0) }</p>
+                        <div className="min-w-[80px] text-right">
+                        <p className={`text-xs font-bold italic ${ (replenishQuantities[p.id] || 0) > 0 ? 'text-emerald-600' : (replenishQuantities[p.id] || 0) < 0 ? 'text-red-500' : 'text-gray-300'}`}>
+                            { (replenishQuantities[p.id] || 0) > 0 ? `+${replenishQuantities[p.id]}` : (replenishQuantities[p.id] || 0) }
+                        </p>
+                        <p className="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">Nouvel État: { (p.stock || 0) + (replenishQuantities[p.id] || 0) }</p>
+                        </div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="p-8 bg-secondary flex justify-between items-center">
+            <div className="p-6 md:p-8 bg-secondary flex flex-col md:flex-row justify-between items-center gap-6">
               <div className="flex items-center gap-3 text-white/50 italic text-[10px] font-bold uppercase tracking-widest">
                  <CheckCircle2 className="w-4 h-4 text-amber-500" />
                  Validation des réserves requise
               </div>
-              <div className="flex gap-4">
-                <Button onClick={() => setShowReplenishModal(false)} variant="outline" className="border-white/20 text-white hover:bg-white/10 italic">ANNULER</Button>
-                <Button onClick={handleReplenishSubmit} className="bg-amber-500 text-secondary hover:bg-white border-none italic font-bold px-10">CONFIRMER LE MOUVEMENT</Button>
+              <div className="flex gap-4 w-full md:w-auto">
+                <Button onClick={() => setShowReplenishModal(false)} variant="outline" className="flex-1 md:flex-none border-white/20 text-white hover:bg-white/10 italic">ANNULER</Button>
+                <Button onClick={handleReplenishSubmit} className="flex-1 md:flex-none bg-amber-500 text-secondary hover:bg-white border-none italic font-bold px-10">CONFIRMER</Button>
               </div>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 
@@ -34,7 +34,20 @@ export const requestNotificationPermission = async () => {
          vapidKey: "BOmOzPQLUnPILR_9Ug7Nk1bYFvm_uTlOI9m2B2-O2s2sNis6RU8E9cIg28v3_x_DyZoF_aQp-Bz25KKH0ExQG5E",
          serviceWorkerRegistration: registration
       });
-      console.log('FCM Token généré:', token);
+      
+      if (token) {
+        console.log('FCM Token généré:', token);
+        // Sauvegarde automatique dans Firestore pour l'usage par l'API Notify
+        try {
+            await setDoc(doc(db, 'settings', 'notifications'), {
+                adminToken: token,
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+            console.log('Token persisté dans Firestore.');
+        } catch (dbErr) {
+            console.error('Erreur sauvegarde token Firestore:', dbErr);
+        }
+      }
       return token;
     } else {
       console.log('Permission refusée');
