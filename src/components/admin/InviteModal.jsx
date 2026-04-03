@@ -1,16 +1,38 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Copy, Download, Share2, Check, QrCode } from 'lucide-react';
+import { X, Copy, Download, Share2, Check, QrCode, Tag, Sparkles } from 'lucide-react';
 import QRCode from 'qrcode';
 import html2canvas from 'html2canvas';
+import { api } from '../../services/api';
 
 const InviteModal = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [copying, setCopying] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [generatingPoster, setGeneratingPoster] = useState(false);
+  const [promoCodes, setPromoCodes] = useState([]);
+  const [selectedPromoId, setSelectedPromoId] = useState('');
+  const [showPromo, setShowPromo] = useState(false);
   const posterRef = useRef(null);
   
   const shopUrl = window.location.origin;
+
+  useEffect(() => {
+    const fetchPromos = async () => {
+      try {
+        const codes = await api.getPromoCodes();
+        const activeCodes = codes.filter(c => c.active || c.isActive);
+        setPromoCodes(activeCodes);
+        if (activeCodes.length > 0) {
+          setSelectedPromoId(activeCodes[0].id);
+        }
+      } catch (err) {
+        console.error('Error fetching promos:', err);
+      }
+    };
+    if (isOpen) fetchPromos();
+  }, [isOpen]);
+
+  const selectedPromo = promoCodes.find(p => p.id === selectedPromoId);
 
   useEffect(() => {
     const handleOpen = () => setIsOpen(true);
@@ -129,6 +151,45 @@ const InviteModal = () => {
               </div>
             </div>
 
+            {/* Promotion Selector */}
+            <div className="space-y-4 pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-between">
+                 <div className="flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-amber-500" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-secondary">Promotion sur le poster</span>
+                 </div>
+                 <button 
+                    onClick={() => setShowPromo(!showPromo)}
+                    className={`w-10 h-5 transition-colors relative ${showPromo ? 'bg-amber-500' : 'bg-gray-200'}`}
+                 >
+                    <div className={`absolute top-1 w-3 h-3 bg-white transition-all ${showPromo ? 'right-1' : 'left-1'}`} />
+                 </button>
+              </div>
+
+              {showPromo && (
+                <div className="animate-slide-up">
+                  <select 
+                    value={selectedPromoId}
+                    onChange={(e) => setSelectedPromoId(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 px-4 py-3 text-[11px] font-bold text-secondary outline-none appearance-none cursor-pointer"
+                  >
+                    {promoCodes.length > 0 ? (
+                      promoCodes.map(promo => (
+                        <option key={promo.id} value={promo.id}>
+                          {promo.id} ({promo.discountType === 'percentage' ? `-${promo.discountValue}%` : `-${promo.discountValue} FCFA`})
+                        </option>
+                      ))
+                    ) : (
+                      <option disabled>Aucun code actif</option>
+                    )}
+                  </select>
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mt-2 italic px-1">
+                    * Le code sera affiché en bas du visuel.
+                  </p>
+                </div>
+              )}
+            </div>
+
             <button 
               onClick={downloadPoster}
               disabled={generatingPoster}
@@ -215,8 +276,20 @@ const InviteModal = () => {
                 </div>
               </div>
 
+              {/* Promo Highlight - Dynamic insertion */}
+              {showPromo && selectedPromo && (
+                <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', border: '1px dashed #f59e0b', padding: '4px 12px' }}>
+                      <Sparkles size={12} color="#f59e0b" />
+                      <p style={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', color: '#ffffff', letterSpacing: '0.1em', margin: 0 }}>
+                         OFFRE : <span style={{ color: '#f59e0b' }}>{selectedPromo.discountType === 'percentage' ? `-${selectedPromo.discountValue}%` : `-${selectedPromo.discountValue}F`}</span> CODE : <span style={{ color: '#f59e0b' }}>{selectedPromo.id}</span>
+                      </p>
+                   </div>
+                </div>
+              )}
+
               {/* Footer Section */}
-              <div style={{ height: '90px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', paddingBottom: '10px', zIndex: 10 }}>
+              <div style={{ height: showPromo ? '60px' : '90px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', paddingBottom: '10px', zIndex: 10 }}>
                 <div style={{ backgroundColor: '#f59e0b', color: '#0a0a0a', padding: '6px 20px', marginBottom: '12px', display: 'inline-block' }}>
                   <p style={{ fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.15em', fontStyle: 'italic', margin: 0 }}>
                     Scannez pour commander
