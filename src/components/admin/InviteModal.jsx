@@ -41,9 +41,18 @@ const InviteModal = () => {
     setGeneratingPoster(true);
     try {
       const canvas = await html2canvas(posterRef.current, {
-        scale: 3,
+        scale: 4, // Ultra high quality for social media
         useCORS: true,
-        backgroundColor: '#1c1917'
+        backgroundColor: '#0a0a0a',
+        logging: false,
+        onclone: (clonedDoc) => {
+          const poster = clonedDoc.querySelector('[data-poster-container]');
+          if (poster) {
+            poster.style.width = '320px';
+            poster.style.height = '400px';
+            poster.style.display = 'flex';
+          }
+        }
       });
       const link = document.createElement('a');
       link.download = `mystik-poster-invite.png`;
@@ -51,6 +60,7 @@ const InviteModal = () => {
       link.click();
     } catch (err) {
       console.error('Error generating poster:', err);
+      alert("Erreur lors de la génération du poster. Vérifiez la console.");
     } finally {
       setGeneratingPoster(false);
     }
@@ -143,54 +153,81 @@ const InviteModal = () => {
               <p className="text-white text-[10px] font-black uppercase tracking-widest">Aperçu du visuel</p>
             </div>
             
-            {/* The Actual Poster Element to Capture */}
+            {/* The Actual Poster Element to Capture - Fixed dimensions for stable rendering */}
             <div 
               ref={posterRef}
-              className="aspect-[4/5] bg-secondary text-white p-8 flex flex-col items-center justify-between text-center relative overflow-hidden"
+              data-poster-container
+              style={{ 
+                backgroundColor: '#0a0a0a', 
+                color: '#ffffff',
+                width: '320px',
+                height: '400px',
+                position: 'relative',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                padding: '24px',
+                margin: '0 auto'
+              }}
             >
-              {/* Decorative elements */}
-              <div className="absolute top-0 right-0 w-44 h-44 bg-amber-500/10 rotate-45 translate-x-20 -translate-y-20" />
-              <div className="absolute bottom-0 left-0 w-44 h-44 bg-amber-500/10 rotate-45 -translate-x-20 translate-y-20" />
+              {/* Discrete Decorative shapes (Simpler for capture stability) */}
+              <div 
+                style={{ position: 'absolute', top: '-40px', right: '-40px', width: '120px', height: '120px', backgroundColor: '#f59e0b', opacity: 0.1, transform: 'rotate(45deg)' }} 
+              />
+              <div 
+                style={{ position: 'absolute', bottom: '-40px', left: '-40px', width: '120px', height: '120px', backgroundColor: '#f59e0b', opacity: 0.1, transform: 'rotate(45deg)' }} 
+              />
 
-              {/* Logo & Brand */}
-              <div className="z-10 mt-4">
+              {/* Header Logo */}
+              <div style={{ height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
                 <img 
-                  src="/images/mystik/logo mystik.png" 
+                  src="/images/mystik/logo mystik black.png" 
                   alt="Logo" 
-                  className="w-14 h-14 mx-auto mb-3 invert brightness-200" 
+                  style={{ width: '48px', height: '48px' }} 
                 />
-                <h3 className="text-2xl font-display font-black uppercase italic leading-tight tracking-[0.15em]">
+              </div>
+
+              {/* Brand Section */}
+              <div style={{ textAlign: 'center', zIndex: 10, marginBottom: '20px' }}>
+                <h3 style={{ fontSize: '22px', fontFamily: '"Playfair Display", serif', fontWeight: '900', textTransform: 'uppercase', fontStyle: 'italic', color: '#ffffff', letterSpacing: '0.15em', lineHeight: '1.2' }}>
                   MYSTIK
                 </h3>
-                <p className="text-amber-500 text-[9px] font-black tracking-[0.4em] uppercase mt-1">
+                <p style={{ color: '#f59e0b', fontSize: '8px', fontWeight: '900', letterSpacing: '0.4em', textTransform: 'uppercase', marginTop: '2px' }}>
                   LEGEND'S DRINK
                 </p>
               </div>
 
-              {/* QR Code Section */}
-              <div className="bg-white p-4 shadow-2xl relative z-10 border-2 border-amber-500/30">
-                {qrCodeUrl ? (
-                  <img src={qrCodeUrl} alt="QR Code" className="w-28 h-28" />
-                ) : (
-                  <div className="w-28 h-28 bg-gray-100 animate-pulse" />
-                )}
-                <div className="absolute -top-3 -right-3 bg-amber-500 text-secondary p-1.5 shadow-lg">
-                   <QrCode className="w-4 h-4" />
+              {/* QR Code Section - Centered in free space */}
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, width: '100%' }}>
+                <div 
+                  style={{ backgroundColor: '#ffffff', border: '2px solid #f59e0b40', padding: '12px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)', position: 'relative' }}
+                >
+                  {qrCodeUrl ? (
+                    <img src={qrCodeUrl} alt="QR Code" style={{ width: '100px', height: '100px', display: 'block' }} />
+                  ) : (
+                    <div style={{ width: '100px', height: '100px', backgroundColor: '#f3f4f6' }} />
+                  )}
+                  {/* Small Icon over QR */}
+                  <div style={{ position: 'absolute', top: '-10px', right: '-10px', backgroundColor: '#f59e0b', color: '#0a0a0a', padding: '4px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+                     <QrCode size={14} />
+                  </div>
                 </div>
               </div>
 
-              {/* Footer Call to Action */}
-              <div className="z-10 w-full px-4 mb-2 space-y-4">
-                <div className="py-2 px-6 bg-amber-500 text-secondary inline-block">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] italic">
+              {/* Footer Section */}
+              <div style={{ height: '90px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', paddingBottom: '10px', zIndex: 10 }}>
+                <div style={{ backgroundColor: '#f59e0b', color: '#0a0a0a', padding: '6px 20px', marginBottom: '12px', display: 'inline-block' }}>
+                  <p style={{ fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.15em', fontStyle: 'italic', margin: 0 }}>
                     Scannez pour commander
                   </p>
                 </div>
-                <div className="flex flex-col items-center gap-2">
-                   <p className="text-[8px] font-bold uppercase tracking-[0.3em] text-gray-400">
+                
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                   <p style={{ fontSize: '7px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.3em', color: '#9ca3af', margin: 0 }}>
                       L'Esprit du Togo
                    </p>
-                   <div className="w-6 h-[1px] bg-amber-500 opacity-30" />
+                   <div style={{ width: '20px', height: '1px', backgroundColor: '#f59e0b', opacity: 0.3 }} />
                 </div>
               </div>
             </div>

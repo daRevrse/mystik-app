@@ -17,13 +17,10 @@ const AdminNotificationManager = () => {
       // On évite de forcer une demande de permission ici (PWAInitializer s'en charge)
       if ('Notification' in window && Notification.permission === 'granted') {
         try {
-          console.log('[NOTIFICATION MANAGER] Rafraîchissement connection...');
           const token = await requestNotificationPermission();
           if (token) {
-            console.log('[NOTIFICATION MANAGER] Appareil synchronisé.');
           }
         } catch (err) {
-          console.error('[NOTIFICATION MANAGER] Erreur lors du rafraîchissement:', err);
         }
       }
     };
