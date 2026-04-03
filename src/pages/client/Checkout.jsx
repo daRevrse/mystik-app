@@ -8,8 +8,23 @@ import { ArrowLeft, Trash2, CreditCard, Truck, ChevronRight, ShoppingCart, Minus
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { items, getCartTotal, removeItem, updateQuantity, clearCart } = useCartStore();
+  const { 
+    items, 
+    getCartTotal, 
+    removeItem, 
+    updateQuantity, 
+    clearCart,
+    appliedPromo,
+    setAppliedPromo,
+    removeAppliedPromo,
+    getDiscountAmount,
+    getDiscountedTotal
+  } = useCartStore();
+  
   const [loading, setLoading] = useState(false);
+  const [promoInput, setPromoInput] = useState('');
+  const [promoError, setPromoError] = useState('');
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -25,8 +40,9 @@ const Checkout = () => {
   const [selectedNetwork, setSelectedNetwork] = useState(null);
 
   const cartTotal = getCartTotal();
-  const transactionFee = 0; // Mobile Money bientôt disponible
-  const grandTotal = cartTotal + transactionFee; // Les frais de livraison sont à la charge du client à la réception
+  const discoutAmount = getDiscountAmount();
+  const transactionFee = 0; 
+  const grandTotal = getDiscountedTotal() + transactionFee;
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -35,6 +51,21 @@ const Checkout = () => {
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('fr-FR').format(price) + ' FCFA';
+  };
+
+  const handleApplyPromo = async () => {
+    if (!promoInput) return;
+    setIsApplyingPromo(true);
+    setPromoError('');
+    try {
+      const promo = await api.validatePromoCode(promoInput);
+      setAppliedPromo(promo);
+      setPromoInput('');
+    } catch (err) {
+      setPromoError(err.message);
+    } finally {
+      setIsApplyingPromo(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -91,6 +122,8 @@ const Checkout = () => {
           customer: formData,
           items,
           total: grandTotal,
+          discount_amount: discoutAmount,
+          promo_code: appliedPromo ? appliedPromo.id : null,
           transaction_id: txRef,
           paymentStatus: paymentStatus, 
           payment_network: selectedNetwork,
@@ -328,11 +361,55 @@ const Checkout = () => {
                   ))}
                 </div>
 
-                <div className="space-y-6 pt-10 border-t border-gray-100">
+                {/* Section Code Promo */}
+                <div className="mb-10 pt-6 border-t border-gray-50">
+                  {appliedPromo ? (
+                    <div className="flex items-center justify-between bg-amber-50 p-4 border border-amber-100">
+                      <div>
+                        <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Code appliqué</p>
+                        <p className="text-sm font-black text-secondary uppercase italic">{appliedPromo.id}</p>
+                      </div>
+                      <button 
+                        onClick={removeAppliedPromo}
+                        className="text-[10px] font-bold text-red-500 uppercase hover:underline"
+                      >
+                        Retirer
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex gap-2">
+                        <input 
+                          type="text" 
+                          value={promoInput}
+                          onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                          placeholder="CODE PROMO ?"
+                          className="flex-grow bg-gray-50 border-transparent border-b border-b-gray-200 px-4 py-3 text-[10px] font-bold tracking-widest uppercase focus:outline-none focus:border-b-amber-500 transition-all placeholder:opacity-30"
+                        />
+                        <button 
+                          onClick={handleApplyPromo}
+                          disabled={isApplyingPromo || !promoInput}
+                          className="px-6 bg-secondary text-white text-[10px] font-bold uppercase tracking-widest hover:bg-black disabled:opacity-30 disabled:bg-gray-400 transition-all font-display italic"
+                        >
+                          {isApplyingPromo ? '...' : 'Appliquer'}
+                        </button>
+                      </div>
+                      {promoError && <p className="text-[9px] text-red-500 font-bold uppercase tracking-widest">{promoError}</p>}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-6 pt-6 border-t border-gray-100">
                   <div className="flex justify-between text-[10px] font-bold text-gray-400 tracking-[0.2em] uppercase italic opacity-60">
                     <span>Sous-total Artisanal</span>
                     <span className="text-secondary">{formatPrice(cartTotal)}</span>
                   </div>
+                  {appliedPromo && (
+                     <div className="flex justify-between text-[10px] font-bold text-amber-600 tracking-[0.2em] uppercase italic animate-fade-in">
+                        <span>Remise Immédiate</span>
+                        <span>-{formatPrice(discoutAmount)}</span>
+                     </div>
+                  )}
                   {wantsDelivery && (
                     <div className="flex justify-between text-[10px] font-bold text-gray-400 tracking-[0.2em] uppercase italic opacity-60">
                       <span className="flex items-center">

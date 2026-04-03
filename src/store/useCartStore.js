@@ -5,7 +5,10 @@ export const useCartStore = create(
   persist(
     (set, get) => ({
       items: [],
+      appliedPromo: null,
       
+      setAppliedPromo: (promo) => set({ appliedPromo: promo }),
+      removeAppliedPromo: () => set({ appliedPromo: null }),
       addItem: (product, quantity = 1) => {
         const { items } = get();
         const existingItem = items.find((item) => item.id === product.id);
@@ -41,7 +44,7 @@ export const useCartStore = create(
         });
       },
 
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], appliedPromo: null }),
 
       getTotalItems: () => {
         return get().items.reduce((acc, item) => acc + item.quantity, 0);
@@ -52,6 +55,24 @@ export const useCartStore = create(
           (acc, item) => acc + item.price * item.quantity,
           0
         );
+      },
+
+      getDiscountAmount: () => {
+        const { appliedPromo, getCartTotal } = get();
+        if (!appliedPromo) return 0;
+        
+        const subtotal = getCartTotal();
+        if (appliedPromo.discountType === 'percentage') {
+          return Math.round((subtotal * appliedPromo.discountValue) / 100);
+        } else {
+          return appliedPromo.discountValue;
+        }
+      },
+
+      getDiscountedTotal: () => {
+        const total = get().getCartTotal();
+        const discount = get().getDiscountAmount();
+        return Math.max(0, total - discount);
       },
     }),
     {

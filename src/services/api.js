@@ -275,5 +275,65 @@ export const api = {
       console.error("Error updating order payment status:", error);
       throw error;
     }
+  },
+
+  // Codes Promo
+  getPromoCodes: async () => {
+    try {
+      const q = query(collection(db, 'promo_codes'), orderBy('createdAt', 'desc'));
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+    } catch (error) {
+      console.error("Error fetching promo codes:", error);
+      throw error;
+    }
+  },
+
+  updatePromoCode: async (promoData) => {
+    try {
+      const { id, ...data } = promoData;
+      const docRef = doc(db, 'promo_codes', id.toUpperCase());
+      await setDoc(docRef, {
+        ...data,
+        code: id.toUpperCase(),
+        updatedAt: serverTimestamp(),
+        createdAt: data.createdAt || serverTimestamp()
+      }, { merge: true });
+      return { ...data, id: id.toUpperCase() };
+    } catch (error) {
+      console.error("Error updating promo code:", error);
+      throw error;
+    }
+  },
+
+  deletePromoCode: async (id) => {
+    try {
+      const { deleteDoc } = await import('firebase/firestore');
+      await deleteDoc(doc(db, 'promo_codes', id));
+      return true;
+    } catch (error) {
+      console.error("Error deleting promo code:", error);
+      throw error;
+    }
+  },
+
+  validatePromoCode: async (code) => {
+    try {
+      const docRef = doc(db, 'promo_codes', code.toUpperCase());
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.isActive) {
+          return { ...data, id: docSnap.id };
+        }
+        throw new Error('Ce code promo n\'est plus actif');
+      } else {
+        throw new Error('Code promo invalide');
+      }
+    } catch (error) {
+      console.error("Error validating promo code:", error);
+      throw error;
+    }
   }
 };
