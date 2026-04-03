@@ -12,17 +12,19 @@ import Dashboard from './pages/admin/Dashboard';
 import Orders from './pages/admin/Orders';
 import AdminProducts from './pages/admin/Products';
 import Settings from './pages/admin/Settings';
-import Caisse from './pages/admin/Caisse';
+import Clients from './pages/admin/Clients';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
 import AdminLayout from './components/common/AdminLayout';
 import Login from './pages/admin/Login';
 import ScrollToTop from './components/common/ScrollToTop';
+import PWAInitializer from './components/common/PWAInitializer';
 
 function App() {
   return (
     <Router>
       <ScrollToTop />
+      <PWAInitializer />
       <div className="flex flex-col min-h-screen">
         <Routes>
           {/* Routes Client */}
@@ -55,7 +57,7 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="orders" element={<Orders />} />
             <Route path="products" element={<AdminProducts />} />
-            <Route path="caisse" element={<Caisse />} />
+            <Route path="clients" element={<Clients />} />
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>

@@ -158,11 +158,36 @@ export const ReceiptService = {
 
     document.body.appendChild(element);
 
+    // On attend que toutes les images soient chargées avant de capturer le canvas
+    await new Promise(resolve => {
+      const images = element.getElementsByTagName('img');
+      let loadedCount = 0;
+      if (images.length === 0) resolve();
+      for (let i = 0; i < images.length; i++) {
+        if (images[i].complete) {
+          loadedCount++;
+          if (loadedCount === images.length) resolve();
+        } else {
+          images[i].onload = () => {
+            loadedCount++;
+            if (loadedCount === images.length) resolve();
+          };
+          images[i].onerror = () => {
+            loadedCount++;
+            if (loadedCount === images.length) resolve();
+          };
+        }
+      }
+      // Timeout de sécurité
+      setTimeout(resolve, 1000);
+    });
+
     try {
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
-        logging: false
+        logging: false,
+        backgroundColor: '#ffffff'
       });
       
       const imgData = canvas.toDataURL('image/png');

@@ -19,7 +19,6 @@ if (!admin.apps.length) {
 }
 
 export default async function handler(req, res) {
-    // Sécurité: accepter uniquement du POST
     if (req.method !== 'POST') {
         return res.status(405).json({ success: false, message: 'Only POST requests allowed' });
     }
@@ -27,52 +26,82 @@ export default async function handler(req, res) {
     try {
         const { title, body } = req.body;
         
-        // 1. Récupération du Token Cible via Firestore (Évite le .env)
-        let targetToken = req.body.token;
-        
-        if (!targetToken) {
-            try {
-                const settingsDoc = await admin.firestore().doc('settings/notifications').get();
-                if (settingsDoc.exists) {
-                    targetToken = settingsDoc.data().adminToken;
-                    console.log("Token récupéré depuis Firestore.");
-                }
-            } catch (dbErr) {
-                console.error("Erreur récupération token Firestore:", dbErr);
+        // 1. Récupération de TOUS les tokens actifs dans Firestore
+        const adminDevicesSnap = await admin.firestore().collection('admin_devices').get();
+        let tokens = [];
+        let tokenDocIds = [];
+
+        adminDevicesSnap.forEach(doc => {
+            const data = doc.data();
+            if (data.token) {
+                tokens.push(data.token);
+                tokenDocIds.push(doc.id);
+            }
+        });
+
+        // Backward compatibility (fallback sur l'ancien champ unique)
+        if (tokens.length === 0) {
+            const settingsDoc = await admin.firestore().doc('settings/notifications').get();
+            if (settingsDoc.exists && settingsDoc.data().adminToken) {
+                const oldToken = settingsDoc.data().adminToken;
+                tokens.push(oldToken);
+                tokenDocIds.push('legacy');
             }
         }
 
-        // Fallback ultime (optionnel)
-        if (!targetToken) targetToken = process.env.ADMIN_DEVICE_TOKEN;
-
-        if (!targetToken) {
-            console.error("Aucun Token FCM trouvé dans Firestore ou dans la requête.");
-            return res.status(400).json({ success: false, message: "Token manquant." });
+        // Fallback .env
+        if (tokens.length === 0 && process.env.ADMIN_DEVICE_TOKEN) {
+            tokens.push(process.env.ADMIN_DEVICE_TOKEN);
+            tokenDocIds.push('env');
         }
 
-        if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_PRIVATE_KEY) {
-            console.error("Les credentials Firebase Admin ne sont pas configurés sur ce serveur.");
-            return res.status(500).json({ success: false, message: "Compte de Service Firebase manquant coté serveur." });
+        if (tokens.length === 0) {
+            return res.status(200).json({ success: true, message: "Aucun récepteur configuré." });
         }
 
-        // 2. Fabrication du message Push V1
-        const message = {
+        // 2. Envoi via messaging().sendEach()
+        const messages = tokens.map(token => ({
             notification: {
                 title: title || 'Nouvelle Alerte Mystik',
                 body: body || 'Une action nécessite votre attention.',
             },
-            // Options supplémentaires pour Web/Android/iOS si besoin
-            token: targetToken,
-        };
+            token: token,
+        }));
 
-        // 3. Envoi via FCM v1
-        const response = await admin.messaging().send(message);
+        const response = await admin.messaging().sendEach(messages);
         
-        console.log('✅ Push envoyé avec succès ! MessageID:', response);
-        return res.status(200).json({ success: true, messageId: response });
+        // 3. Nettoyage automatique des tokens expirés
+        const cleanupPromises = [];
+        response.responses.forEach((resp, idx) => {
+            if (!resp.success) {
+                const errorCode = resp.error?.code;
+                const docId = tokenDocIds[idx];
+                
+                // Si le token est invalide ou n'est plus enregistré, on le supprime de Firestore
+                if (errorCode === 'messaging/registration-token-not-registered' || 
+                    errorCode === 'messaging/invalid-registration-token') {
+                    
+                    if (docId && docId !== 'legacy' && docId !== 'env') {
+                        cleanupPromises.push(
+                            admin.firestore().collection('admin_devices').doc(docId).delete()
+                        );
+                        console.log(`[CLEANUP] Supression token invalide : ${docId}`);
+                    }
+                }
+            }
+        });
+        
+        if (cleanupPromises.length > 0) await Promise.all(cleanupPromises);
+
+        console.log(`✅ Résultat Push : ${response.successCount} succès, ${response.failureCount} échecs.`);
+        return res.status(200).json({ 
+            success: true, 
+            successCount: response.successCount, 
+            failureCount: response.failureCount 
+        });
 
     } catch (error) {
-        console.error('❌ Erreur Envoi Firebase Push:', error);
+        console.error('❌ Erreur Envoi Multi-Push:', error);
         return res.status(500).json({ success: false, error: error.message });
     }
 }

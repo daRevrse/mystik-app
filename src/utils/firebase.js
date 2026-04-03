@@ -37,15 +37,17 @@ export const requestNotificationPermission = async () => {
       
       if (token) {
         console.log('FCM Token généré:', token);
-        // Sauvegarde automatique dans Firestore pour l'usage par l'API Notify
+        // Sauvegarde automatique dans Firestore (nouveau modèle multi-appareils)
         try {
-            await setDoc(doc(db, 'settings', 'notifications'), {
-                adminToken: token,
-                updatedAt: new Date().toISOString()
+            await setDoc(doc(db, 'admin_devices', token), {
+                token: token,
+                lastSeen: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                platform: navigator.platform
             }, { merge: true });
-            console.log('Token persisté dans Firestore.');
+            console.log('Appareil enregistré dans Firestore.');
         } catch (dbErr) {
-            console.error('Erreur sauvegarde token Firestore:', dbErr);
+            console.error('Erreur sauvegarde appareil Firestore:', dbErr);
         }
       }
       return token;

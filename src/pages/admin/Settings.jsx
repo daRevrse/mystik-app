@@ -21,6 +21,9 @@ const Settings = () => {
       setIsPasswordEnabled(enabledParam === 'true');
     }
 
+    if ('Notification' in window && Notification.permission === 'granted') {
+      setFcmStatus('Activé');
+    }
   }, []);
 
   const handleSave = (e) => {
@@ -34,14 +37,18 @@ const Settings = () => {
   };
 
   const handleEnableFCM = async () => {
+    if (fcmStatus === 'Activé') return;
     setFcmStatus('Demande en cours...');
-    const token = await requestNotificationPermission();
-    if (token) {
-      setFcmStatus('Activé');
-      setFcmToken(token);
-      localStorage.setItem('mystikAdminFCMToken', token); // Stockage pour dev local
-    } else {
-      setFcmStatus('Refusé ou erreur');
+    try {
+      const token = await requestNotificationPermission();
+      if (token) {
+        setFcmStatus('Activé');
+        setFcmToken(token);
+      } else {
+        setFcmStatus('Refusé ou erreur');
+      }
+    } catch (err) {
+      setFcmStatus('Erreur');
     }
   };
 
@@ -118,39 +125,42 @@ const Settings = () => {
               <Bell className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-bold uppercase tracking-tighter text-secondary italic">Notifications FCM</h2>
-              <p className="text-[10px] uppercase text-gray-400 font-bold tracking-widest">Alertes en temps réel</p>
+              <h2 className="text-xl font-bold uppercase tracking-tighter text-secondary italic">Notifications Admin</h2>
+              <p className="text-[10px] uppercase text-gray-400 font-bold tracking-widest">Alertes de commandes</p>
             </div>
           </div>
           
           <div className="space-y-6">
             <p className="text-xs font-bold leading-relaxed text-gray-500 uppercase tracking-widest text-justify">
-              L'intégration Firebase est préparée. Une fois les clés configurées, vous pourrez activer les notifications push sur cet appareil.
+              Activez les notifications sur ce navigateur pour être alerté instantanément de chaque nouvelle commande Mystik.
             </p>
-            <div className="p-4 bg-gray-50 border border-gray-100 italic">
-               <span className="text-xs font-bold uppercase text-gray-400">Statut: </span>
-               <span className="text-xs font-bold uppercase text-secondary ml-2">{fcmStatus}</span>
-               
-               {fcmToken && (
-                 <div className="mt-4 pt-4 border-t border-gray-200">
-                    <p className="text-[10px] uppercase text-amber-600 font-bold tracking-widest mb-2">Votre Token Administrateur :</p>
-                    <textarea 
-                       readOnly 
-                       value={fcmToken} 
-                       className="w-full h-24 p-2 text-[10px] font-mono text-gray-500 bg-gray-100 border border-gray-200 outline-none resize-none"
-                    />
-                    <p className="text-[9px] uppercase text-gray-400 mt-2 font-bold italic tracking-wider leading-relaxed">
-                      Copiez ce token et collez-le dans la variable <b>ADMIN_DEVICE_TOKEN</b> sur Vercel.
-                    </p>
-                 </div>
-               )}
+            
+            <div className="p-6 border border-gray-100 bg-gray-50/50 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] uppercase text-gray-400 font-bold tracking-widest mb-1">Statut actuel</p>
+                <p className={`text-xs font-black uppercase tracking-widest ${fcmStatus === 'Activé' ? 'text-green-600' : 'text-secondary'}`}>
+                  {fcmStatus}
+                </p>
+              </div>
+              
+              <div className={`w-3 h-3 rounded-full ${fcmStatus === 'Activé' ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} />
             </div>
+
             <Button 
                 onClick={handleEnableFCM}
-                variant="outline" 
-                className="w-full border-gray-200 text-gray-500 hover:bg-gray-50 rounded-none">
-              ACTIVER (Test Local)
+                className={`w-full rounded-none font-black text-[11px] uppercase tracking-widest py-4 ${
+                  fcmStatus === 'Activé' 
+                    ? 'bg-gray-100 text-gray-400 cursor-default' 
+                    : 'bg-secondary text-white hover:bg-black'
+                }`}>
+              {fcmStatus === 'Activé' ? 'Notifications Activées' : 'Activer les notifications'}
             </Button>
+            
+            {fcmStatus === 'Activé' && (
+              <p className="text-[9px] text-center text-gray-400 font-bold uppercase tracking-widest italic">
+                Cet appareil recevra les alertes push
+              </p>
+            )}
           </div>
         </Card>
       </div>

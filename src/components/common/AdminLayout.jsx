@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Coffee, ArrowLeft, Settings, Wallet } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Coffee, ArrowLeft, Settings, Wallet, Users, Share2, Plus } from 'lucide-react';
 import { useAdminStore } from '../../store/useAdminStore';
+import InviteModal from '../admin/InviteModal';
+import AdminNotificationManager from '../admin/AdminNotificationManager';
 
 const AdminLayout = () => {
   const location = useLocation();
@@ -24,8 +26,8 @@ const AdminLayout = () => {
   const menuItems = [
     { icon: LayoutDashboard, label: 'Tableau de Bord', path: '/admin' },
     { icon: ShoppingCart, label: 'Commandes', path: '/admin/orders', badge: newOrdersCount },
+    { icon: Users, label: 'Clients', path: '/admin/clients' },
     { icon: Coffee, label: 'Produits', path: '/admin/products' },
-    // { icon: Wallet, label: 'Caisse', path: '/admin/caisse' },
     { icon: Settings, label: 'Paramètres', path: '/admin/settings' },
   ];
 
@@ -71,11 +73,8 @@ const AdminLayout = () => {
           })}
         </nav>
 
-        <div className="p-8 mt-auto border-t border-white/5 space-y-4">
-          <Link to="/" className="flex items-center space-x-3 text-gray-500 hover:text-white transition-colors text-[10px] font-bold tracking-[0.3em] uppercase italic">
-            <ArrowLeft className="w-4 h-4" />
-            <span>Vers la boutique</span>
-          </Link>
+        <div className="p-8 mt-auto border-t border-white/5 space-y-4 text-center">
+          <p className="text-[8px] text-gray-500 uppercase tracking-widest font-bold">Mystik Admin v2.0</p>
         </div>
       </aside>
 
@@ -88,13 +87,23 @@ const AdminLayout = () => {
 
       {/* Main Content Area */}
       <main className="flex-grow overflow-auto bg-[#fafaf9] pb-24 md:pb-0">
-        <header className="bg-white border-b border-gray-100 px-10 py-6 justify-between items-center sticky top-0 z-10 hidden md:flex">
+        <header className="bg-white border-b border-gray-100 px-10 py-6 flex justify-between items-center sticky top-0 z-30 hidden md:flex backdrop-blur-md bg-white/80">
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.5em] italic leading-none">Console de Gestion • MYSTIK LEGEND'S DRINK</p>
+          
+          <button 
+            onClick={() => window.dispatchEvent(new CustomEvent('open-invite-modal'))}
+            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-secondary px-6 py-2.5 font-black text-[11px] uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-lg shadow-amber-500/20"
+          >
+            <Share2 className="w-4 h-4" />
+            <span>Inviter</span>
+          </button>
         </header>
 
-        <div className="p-6 md:p-12 animate-fade-in">
+        <div className="p-6 md:p-12 animate-fade-in relative z-0">
           <Outlet />
         </div>
+        <InviteModal />
+        <AdminNotificationManager />
       </main>
 
       {/* MOBILE BOTTOM NAVIGATION - App Look */}
@@ -125,12 +134,15 @@ const AdminLayout = () => {
             </Link>
           );
         })}
-        <Link to="/" className="flex flex-col items-center gap-1.5 py-1">
-          <div className="p-2 text-gray-500">
-            <ArrowLeft className="w-5 h-5" />
+        <button 
+          onClick={() => window.dispatchEvent(new CustomEvent('open-invite-modal'))}
+          className="flex flex-col items-center gap-1.5 py-1"
+        >
+          <div className="p-2 text-amber-500 bg-amber-500/10 rounded-full">
+            <Plus className="w-5 h-5" />
           </div>
-          <span className="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-500">Shop</span>
-        </Link>
+          <span className="text-[8px] font-bold uppercase tracking-[0.15em] text-amber-500">Inviter</span>
+        </button>
       </nav>
     </div>
   );

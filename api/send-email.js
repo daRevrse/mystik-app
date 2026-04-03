@@ -9,15 +9,28 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 const FROM_EMAIL = 'Mystik Drinks <no-reply@mystikdrinks.com>';
 
-// Charge le logo en base64 une seule fois au démarrage
-let LOGO_BASE64 = null;
-try {
-  const logoPath = join(__dirname, '..', 'branding', 'logo mystik.jpg');
-  const logoBuffer = readFileSync(logoPath);
-  LOGO_BASE64 = `data:image/jpeg;base64,${logoBuffer.toString('base64')}`;
-} catch (e) {
-  console.warn('[EMAIL] Logo non trouvé, fallback texte utilisé.');
-}
+// Fonction pour charger le logo en base64
+const getLogoBase64 = () => {
+  try {
+    // Tente de trouver le logo dans les dossiers branding ou public
+    const paths = [
+      join(__dirname, '..', 'branding', 'logo mystik.jpg'),
+      join(__dirname, '..', 'public', 'images', 'mystik', 'logo mystik.jpg')
+    ];
+    
+    for (const logoPath of paths) {
+      try {
+        const logoBuffer = readFileSync(logoPath);
+        return `data:image/jpeg;base64,${logoBuffer.toString('base64')}`;
+      } catch (e) { continue; }
+    }
+  } catch (e) {
+    console.warn('[EMAIL] Erreur lors de la lecture du logo:', e.message);
+  }
+  return null;
+};
+
+const LOGO_BASE64 = getLogoBase64();
 
 const formatPrice = (price) => new Intl.NumberFormat('fr-FR').format(price) + ' FCFA';
 
@@ -125,7 +138,7 @@ const buildEmailHTML = (order, type) => {
     <div class="footer">
       AFRIK SELECT · BE PA DE SOUZA, LOMÉ · RCCM TG-LFW-01-2024-A-10-04869<br />
       <a href="https://mystikdrinks.com" style="color:#d4af37;">mystikdrinks.com</a> &nbsp;·&nbsp; 
-      <a href="https://wa.me/22890000000" style="color:#9ca3af;">WhatsApp</a>
+      <a href="https://wa.me/22892721373" style="color:#9ca3af;">WhatsApp</a>
     </div>
   </div>
 </body>
