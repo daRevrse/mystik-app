@@ -4,6 +4,10 @@ import Product from './pages/client/Product';
 import Checkout from './pages/client/Checkout';
 import Success from './pages/client/Success';
 import About from './pages/client/About';
+import PointsDeVente from './pages/client/PointsDeVente';
+import Livraison from './pages/client/Livraison';
+import Contact from './pages/client/Contact';
+import CGV from './pages/client/CGV';
 import Dashboard from './pages/admin/Dashboard';
 import Orders from './pages/admin/Orders';
 import AdminProducts from './pages/admin/Products';
@@ -34,6 +38,10 @@ function App() {
                     <Route path="/product/:id" element={<Product />} />
                     <Route path="/checkout" element={<Checkout />} />
                     <Route path="/success" element={<Success />} />
+                    <Route path="/points-de-vente" element={<PointsDeVente />} />
+                    <Route path="/livraison" element={<Livraison />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/cgv" element={<CGV />} />
                   </Routes>
                 </main>
                 <Footer />

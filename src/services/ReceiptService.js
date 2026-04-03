@@ -1,7 +1,41 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import QRCode from 'qrcode';
 
 export const ReceiptService = {
+  /**
+   * Génère un QR code Data URL contenant les infos de commande.
+   */
+  generateQRCode: async (order) => {
+    const isPaid = order.paymentStatus === 'Payé';
+    const qrData = [
+      `MYSTIK LEGEND'S DRINK`,
+      `Réf: ${order.id}`,
+      `Client: ${order.customer?.firstName} ${order.customer?.lastName}`,
+      `Téléphone: ${order.customer?.phone || 'N/A'}`,
+      `Statut: ${order.paymentStatus || 'N/A'}`,
+      `Mode: ${order.payment_network === 'COD' ? 'Paiement à la livraison' : order.payment_network || 'N/A'}`,
+      `Total: ${new Intl.NumberFormat('fr-FR').format(order.total)} FCFA`,
+      `Date: ${new Date(order.date).toLocaleDateString('fr-FR')}`,
+      `Articles: ${(order.items || []).map(i => `${i.quantity}x ${i.name}`).join(', ')}`,
+    ].join('\n');
+
+    try {
+      const dataUrl = await QRCode.toDataURL(qrData, {
+        width: 200,
+        margin: 1,
+        color: {
+          dark: '#0a0a0a',
+          light: '#ffffff',
+        },
+      });
+      return dataUrl;
+    } catch (err) {
+      console.error('Erreur génération QR Code:', err);
+      return null;
+    }
+  },
+
   /**
    * Génère un PDF (Facture ou Reçu) pour une commande.
    */
@@ -11,6 +45,9 @@ export const ReceiptService = {
     
     // Calcul précis du total basé sur les articles réels
     const subtotal = order.items.reduce((acc, item) => acc + (item.price * (item.quantity || 1)), 0);
+    
+    // Génération du QR Code
+    const qrCodeDataUrl = await ReceiptService.generateQRCode(order);
     
     // Création d'un élément temporaire pour le rendu HTML vers Canvas
     const element = document.createElement('div');
@@ -49,11 +86,18 @@ export const ReceiptService = {
           <p style="font-size: 16px; font-weight: 700; margin: 0;">${order.customer.firstName} ${order.customer.lastName}</p>
           <p style="font-size: 14px; color: #4b5563; margin: 5px 0;">${order.customer.city}, Togo</p>
         </div>
-        <div style="text-align: right;">
-          <h3 style="font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: #9ca3af; margin-bottom: 15px;">Statut Paiement :</h3>
-          <span style="display: inline-block; padding: 6px 15px; background: ${isPaid ? '#fef3c7' : '#f3f4f6'}; color: ${isPaid ? '#92400e' : '#1f2937'}; font-size: 12px; font-weight: 800; text-transform: uppercase;">
-            ${order.paymentStatus}
-          </span>
+        <div style="display: flex; justify-content: flex-end; align-items: flex-start; gap: 24px;">
+          <div style="text-align: right;">
+            <h3 style="font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: #9ca3af; margin-bottom: 15px;">Statut Paiement :</h3>
+            <span style="display: inline-block; padding: 6px 15px; background: ${isPaid ? '#fef3c7' : '#f3f4f6'}; color: ${isPaid ? '#92400e' : '#1f2937'}; font-size: 12px; font-weight: 800; text-transform: uppercase;">
+              ${order.paymentStatus}
+            </span>
+          </div>
+          ${qrCodeDataUrl ? `
+          <div style="text-align: center;">
+            <img src="${qrCodeDataUrl}" style="width: 100px; height: 100px; border: 1px solid #f3f4f6; padding: 4px;" />
+            <p style="font-size: 7px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Scan pour vérifier</p>
+          </div>` : ''}
         </div>
       </div>
 

@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
-import { CheckCircle2, ChevronRight, Download, Printer, ShoppingBag, ArrowLeft, Star, Truck, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Download, Printer, ShoppingBag, ArrowLeft, Star, Truck, ShieldCheck, QrCode } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
@@ -13,9 +13,13 @@ const Success = () => {
   const order = location.state?.order;
   const { incrementNewOrders } = useAdminStore();
 
+  const [qrCodeUrl, setQrCodeUrl] = useState(null);
+
   React.useEffect(() => {
     if (order) {
       incrementNewOrders();
+      // Génération du QR code en temps réel
+      ReceiptService.generateQRCode(order).then(url => setQrCodeUrl(url));
     }
   }, [order, incrementNewOrders]);
 
@@ -94,6 +98,26 @@ const Success = () => {
             <div className="text-center">
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-2">Statut</p>
               <Badge variant="warning" className="animate-pulse bg-secondary text-white border-none italic">PRÉPARATION</Badge>
+            </div>
+            {/* QR Code Section */}
+            <div className="text-center">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-3">Statut de paiement</p>
+              {qrCodeUrl ? (
+                <div className="flex flex-col items-center gap-2">
+                  <img
+                    src={qrCodeUrl}
+                    alt="QR Code Commande"
+                    className="w-20 h-20 border border-gray-100 p-1"
+                  />
+                  <span className={`text-[9px] font-bold tracking-widest uppercase px-3 py-1 ${isPaid ? 'bg-amber-50 text-amber-700' : 'bg-gray-100 text-gray-700'}`}>
+                    {order.paymentStatus}
+                  </span>
+                </div>
+              ) : (
+                <div className="w-20 h-20 bg-gray-50 flex items-center justify-center">
+                  <QrCode className="w-8 h-8 text-gray-200 animate-pulse" />
+                </div>
+              )}
             </div>
             <div className="text-center">
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-2">Origine</p>

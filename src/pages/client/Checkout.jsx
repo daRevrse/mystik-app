@@ -4,7 +4,7 @@ import { useCartStore } from '../../store/useCartStore';
 import { api } from '../../services/api';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
-import { ArrowLeft, Trash2, CreditCard, Truck, ChevronRight, ShoppingCart, Minus, Plus, Phone, Ghost, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Trash2, CreditCard, Truck, ChevronRight, ShoppingCart, Minus, Plus, Phone, Ghost, ShieldCheck, Lock } from 'lucide-react';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ const Checkout = () => {
   const [selectedNetwork, setSelectedNetwork] = useState(null);
 
   const cartTotal = getCartTotal();
-  const transactionFee = (selectedNetwork === 'FLOOZ' || selectedNetwork === 'TMONEY') ? 500 : 0;
+  const transactionFee = 0; // Mobile Money bientôt disponible
   const grandTotal = cartTotal + transactionFee; // Les frais de livraison sont à la charge du client à la réception
 
   const handleInputChange = (e) => {
@@ -43,6 +43,12 @@ const Checkout = () => {
     
     if (!selectedNetwork) {
        alert("Veuillez sélectionner un mode de paiement pour procéder.");
+       return;
+    }
+
+    // Seul COD est disponible actuellement
+    if (selectedNetwork !== 'COD') {
+       alert("Ce mode de paiement sera bientôt disponible. Veuillez choisir 'À la livraison'.");
        return;
     }
 
@@ -227,41 +233,61 @@ const Checkout = () => {
                 <h3 className="text-2xl font-display font-bold italic tracking-tight uppercase">Paiement & Sécurité</h3>
               </div>
               <div className="p-10 bg-[#fafaf9] border-2 border-dashed border-gray-100 flex flex-col items-center justify-center text-center space-y-6">
-                <div className="grid grid-cols-3 gap-6 w-full">
-                  <button 
-                      type="button" 
-                      onClick={() => setSelectedNetwork('FLOOZ')}
-                      className={`flex flex-col items-center gap-3 p-4 rounded-xl transition-all duration-300 shadow-sm ${selectedNetwork === 'FLOOZ' ? 'bg-white ring-4 ring-primary-500 scale-105' : 'bg-white/50 grayscale opacity-60 hover:opacity-100 hover:grayscale-0'}`}>
-                      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-100 shadow-md">
-                        <img src="/images/moov.jpg" alt="Flooz" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-[10px] font-bold uppercase tracking-widest">Flooz</span>
-                  </button>
-                  <button 
-                      type="button" 
-                      onClick={() => setSelectedNetwork('TMONEY')}
-                      className={`flex flex-col items-center gap-3 p-4 rounded-xl transition-all duration-300 shadow-sm ${selectedNetwork === 'TMONEY' ? 'bg-white ring-4 ring-primary-500 scale-105' : 'bg-white/50 grayscale opacity-60 hover:opacity-100 hover:grayscale-0'}`}>
-                      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-100 shadow-md">
-                        <img src="/images/yas.jpg" alt="T-Money" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-[10px] font-bold uppercase tracking-widest">T-Money</span>
-                  </button>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
+                  {/* Flooz - Bientôt disponible */}
+                  <div className="relative flex flex-col items-center gap-3 p-4 rounded-xl bg-white/40 grayscale opacity-40 cursor-not-allowed">
+                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                      <span className="bg-secondary text-white text-[7px] font-bold tracking-widest uppercase px-2 py-0.5">Bientôt</span>
+                    </div>
+                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-100 shadow-md">
+                      <img src="/images/moov.jpg" alt="Flooz" className="w-full h-full object-cover" />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Flooz</span>
+                  </div>
+
+                  {/* T-Money - Bientôt disponible */}
+                  <div className="relative flex flex-col items-center gap-3 p-4 rounded-xl bg-white/40 grayscale opacity-40 cursor-not-allowed">
+                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                      <span className="bg-secondary text-white text-[7px] font-bold tracking-widest uppercase px-2 py-0.5">Bientôt</span>
+                    </div>
+                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-100 shadow-md">
+                      <img src="/images/yas.jpg" alt="T-Money" className="w-full h-full object-cover" />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest">T-Money</span>
+                  </div>
+
+                  {/* Carte Bancaire - Bientôt disponible */}
+                  <div className="relative flex flex-col items-center gap-3 p-4 rounded-xl bg-white/40 grayscale opacity-40 cursor-not-allowed">
+                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                      <span className="bg-secondary text-white text-[7px] font-bold tracking-widest uppercase px-2 py-0.5">Bientôt</span>
+                    </div>
+                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-100 shadow-md bg-gray-100 flex items-center justify-center">
+                      <CreditCard className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Carte</span>
+                  </div>
+
+                  {/* COD - Disponible */}
                   <button 
                       type="button" 
                       onClick={() => setSelectedNetwork('COD')}
-                      className={`flex flex-col items-center gap-3 p-4 rounded-xl transition-all duration-300 shadow-sm ${selectedNetwork === 'COD' ? 'bg-white ring-4 ring-primary-500 scale-105' : 'bg-white/50 grayscale opacity-60 hover:opacity-100 hover:grayscale-0'}`}>
-                      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-100 shadow-md bg-secondary text-white flex items-center justify-center">
-                        <Truck className="w-8 h-8" />
+                      className={`relative flex flex-col items-center gap-3 p-4 rounded-xl transition-all duration-300 shadow-sm ${selectedNetwork === 'COD' ? 'bg-white ring-4 ring-primary-500 scale-105' : 'bg-white/80 hover:bg-white hover:shadow-md'}`}>
+                    {selectedNetwork === 'COD' && (
+                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                        <span className="bg-primary-500 text-secondary text-[7px] font-bold tracking-widest uppercase px-2 py-0.5">Sélectionné</span>
                       </div>
-                      <span className="text-[10px] font-bold uppercase tracking-widest">À la livraison</span>
+                    )}
+                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-100 shadow-md bg-secondary text-white flex items-center justify-center">
+                      <Truck className="w-8 h-8" />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest">À la livraison</span>
                   </button>
                 </div>
+
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] leading-relaxed italic opacity-80 max-w-sm mt-4">
                   {selectedNetwork === 'COD' 
-                      ? <span className="text-primary-600 block mb-2 text-xs">Paiement à réception des bouteilles</span>
-                      : selectedNetwork 
-                      ? <span className="text-primary-600 block mb-2 text-xs">Validation Mobile Money ({selectedNetwork})</span>
-                      : "Sélectionnez votre mode de règlement préféré."}
+                      ? <span className="text-primary-600 block mb-2 text-xs">✓ Paiement à réception des bouteilles</span>
+                      : <span>Seul le paiement à la livraison est disponible pour le moment.</span>}
                 </p>
               </div>
             </Card>
