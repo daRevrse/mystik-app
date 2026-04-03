@@ -146,34 +146,52 @@ const InviteModal = () => {
             {/* The Actual Poster Element to Capture */}
             <div 
               ref={posterRef}
-              className="aspect-[4/5] bg-secondary text-white p-10 flex flex-col items-center justify-between text-center relative overflow-hidden"
+              className="aspect-[4/5] bg-secondary text-white p-8 flex flex-col items-center justify-between text-center relative overflow-hidden"
             >
               {/* Decorative elements */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rotate-45 translate-x-16 -translate-y-16" />
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-500/10 rotate-45 -translate-x-16 translate-y-16" />
+              <div className="absolute top-0 right-0 w-44 h-44 bg-amber-500/10 rotate-45 translate-x-20 -translate-y-20" />
+              <div className="absolute bottom-0 left-0 w-44 h-44 bg-amber-500/10 rotate-45 -translate-x-20 translate-y-20" />
 
-              <div className="space-y-4 z-10">
-                <img src="/images/mystik/logo mystik black.png" alt="Logo" className="w-20 h-20 mx-auto invert opacity-90" />
-                <h3 className="text-2xl font-display font-black uppercase italic leading-none tracking-tight">
-                  MYSTIK<br />
-                  <span className="text-amber-500 text-xs">LEGEND'S DRINK</span>
+              {/* Logo & Brand */}
+              <div className="z-10 mt-4">
+                <img 
+                  src="/images/mystik/logo mystik.png" 
+                  alt="Logo" 
+                  className="w-14 h-14 mx-auto mb-3 invert brightness-200" 
+                />
+                <h3 className="text-2xl font-display font-black uppercase italic leading-tight tracking-[0.15em]">
+                  MYSTIK
                 </h3>
+                <p className="text-amber-500 text-[9px] font-black tracking-[0.4em] uppercase mt-1">
+                  LEGEND'S DRINK
+                </p>
               </div>
 
-              <div className="bg-white p-4 shadow-2xl relative z-10 scale-110">
+              {/* QR Code Section */}
+              <div className="bg-white p-4 shadow-2xl relative z-10 border-2 border-amber-500/30">
                 {qrCodeUrl ? (
-                  <img src={qrCodeUrl} alt="QR Code" className="w-32 h-32" />
+                  <img src={qrCodeUrl} alt="QR Code" className="w-28 h-28" />
                 ) : (
-                  <div className="w-32 h-32 bg-gray-100 animate-pulse" />
+                  <div className="w-28 h-28 bg-gray-100 animate-pulse" />
                 )}
-                <div className="absolute -top-2 -right-2 bg-amber-500 text-secondary p-1">
+                <div className="absolute -top-3 -right-3 bg-amber-500 text-secondary p-1.5 shadow-lg">
                    <QrCode className="w-4 h-4" />
                 </div>
               </div>
 
-              <div className="space-y-2 z-10">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 italic">Scannez pour commander</p>
-                <p className="text-[8px] font-bold uppercase tracking-widest text-gray-500">L'Esprit du Togo 🇹🇬</p>
+              {/* Footer Call to Action */}
+              <div className="z-10 w-full px-4 mb-2 space-y-4">
+                <div className="py-2 px-6 bg-amber-500 text-secondary inline-block">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] italic">
+                    Scannez pour commander
+                  </p>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                   <p className="text-[8px] font-bold uppercase tracking-[0.3em] text-gray-400">
+                      L'Esprit du Togo
+                   </p>
+                   <div className="w-6 h-[1px] bg-amber-500 opacity-30" />
+                </div>
               </div>
             </div>
           </div>
