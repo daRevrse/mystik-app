@@ -297,29 +297,28 @@ const AdminProducts = () => {
 
       {/* MODAL: ADD PRODUCT */}
       {showAddModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-secondary/80 backdrop-blur-md animate-in fade-in duration-300">
-           <div className="bg-white w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
-            <div className="bg-secondary p-6 md:p-8 text-white flex justify-between items-center">
-                <h2 className="text-2xl md:text-3xl font-display font-bold italic uppercase tracking-tight">Nouvelle <span className="text-amber-500">LÉGENDE</span></h2>
-                <button onClick={() => setShowAddModal(false)} className="hover:text-amber-500 transition-colors">
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-secondary/80 backdrop-blur-md animate-in fade-in duration-300">
+           <div className="bg-white w-full h-[95vh] md:h-auto md:max-h-[90vh] md:max-w-2xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom md:slide-in-from-none md:zoom-in-95 duration-300 flex flex-col rounded-t-3xl md:rounded-none">
+            <div className="bg-secondary p-6 md:p-8 text-white flex justify-between items-center shrink-0">
+                <h2 className="text-xl md:text-3xl font-display font-bold italic uppercase tracking-tight">Nouvelle <span className="text-amber-500">LÉGENDE</span></h2>
+                <button onClick={() => setShowAddModal(false)} className="hover:text-amber-500 transition-colors p-2 -mr-2">
                     <X className="w-6 h-6 md:w-8 md:h-8" />
                 </button>
               </div>
-              
-              <form onSubmit={handleAddProduct} className="p-4 md:p-8 space-y-6 md:space-y-8 overflow-y-auto max-h-[75vh]">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <form onSubmit={handleAddProduct} className="p-6 md:p-8 space-y-6 md:space-y-8 overflow-y-auto flex-grow">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                     {/* Image Upload Area */}
                     <div className="md:col-span-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 italic mb-4 block">PORTRAIT DU TRÉSOR (IMAGE)</label>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 italic mb-3 block">PORTRAIT DU TRÉSOR (IMAGE)</label>
                         <div 
                             onClick={() => fileInputRef.current.click()}
-                            className="w-full h-48 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-amber-500 transition-all group bg-gray-50 relative overflow-hidden"
+                            className="w-full h-40 md:h-48 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-amber-500 transition-all group bg-gray-50 relative overflow-hidden"
                         >
                             {imagePreview ? (
                                 <img src={imagePreview} className="w-full h-full object-contain" alt="Preview" />
                             ) : (
                                 <>
-                                    <Upload className="w-8 h-8 text-gray-300 group-hover:text-amber-500 mb-2" />
+                                    <ImageIcon className="w-8 h-8 text-gray-300 group-hover:text-amber-500 mb-2" />
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Cliquer pour télécharger le visuel</p>
                                 </>
                             )}
@@ -335,11 +334,11 @@ const AdminProducts = () => {
 
                     <div className="space-y-2">
                         <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 italic">Désignation</label>
-                        <input required value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} className="w-full border-b-2 border-gray-100 py-3 text-sm font-bold uppercase focus:outline-none focus:border-amber-500 transition-colors" placeholder="Ex: Mystik Gingembre" />
+                        <input required value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} className="w-full border-b-2 border-gray-100 py-2 md:py-3 text-sm font-bold uppercase focus:outline-none focus:border-amber-500 transition-colors bg-transparent" placeholder="Ex: Mystik Gingembre" />
                     </div>
                     <div className="space-y-2">
                         <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 italic">Catégorie</label>
-                        <select value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className="w-full border-b-2 border-gray-100 py-3 text-sm font-bold uppercase focus:outline-none focus:border-amber-500 transition-colors bg-transparent">
+                        <select value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className="w-full border-b-2 border-gray-100 py-2 md:py-3 text-sm font-bold uppercase focus:outline-none focus:border-amber-500 transition-colors bg-transparent">
                             <option value="Fruitée">Fruitée</option>
                             <option value="Spéciale">Spéciale</option>
                         </select>
@@ -348,27 +347,27 @@ const AdminProducts = () => {
 
                 <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 italic">Description de l'Esprit</label>
-                    <textarea required value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} className="w-full border-b-2 border-gray-100 py-3 text-sm font-bold italic focus:outline-none focus:border-amber-500 transition-colors h-24 resize-none" placeholder="Décrivez l'âme de cette liqueur..." />
+                    <textarea required value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} className="w-full border-b-2 border-gray-100 py-2 md:py-3 text-sm font-bold italic focus:outline-none focus:border-amber-500 transition-colors h-20 md:h-24 resize-none bg-transparent" placeholder="Décrivez l'âme de cette liqueur..." />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 text-center">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 italic">Prix (FCFA)</label>
-                        <input required type="number" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className="w-full border-b-2 border-gray-100 py-3 text-sm font-bold text-center focus:outline-none focus:border-amber-500 transition-colors" placeholder="12000" />
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 italic text-left block">Prix (FCFA)</label>
+                        <input required type="number" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} className="w-full border-b-2 border-gray-100 py-2 md:py-3 text-sm font-bold text-left md:text-center focus:outline-none focus:border-amber-500 transition-colors bg-transparent" placeholder="12000" />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 italic">Stock Initial</label>
-                        <input required type="number" value={newProduct.stock} onChange={e => setNewProduct({...newProduct, stock: e.target.value})} className="w-full border-b-2 border-gray-100 py-3 text-sm font-bold text-center focus:outline-none focus:border-amber-500 transition-colors" placeholder="24" />
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 italic text-left block">Stock</label>
+                        <input required type="number" value={newProduct.stock} onChange={e => setNewProduct({...newProduct, stock: e.target.value})} className="w-full border-b-2 border-gray-100 py-2 md:py-3 text-sm font-bold text-left md:text-center focus:outline-none focus:border-amber-500 transition-colors bg-transparent" placeholder="24" />
                     </div>
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 italic">Volume / Taille</label>
-                        <input value={newProduct.vol} onChange={e => setNewProduct({...newProduct, vol: e.target.value})} className="w-full border-b-2 border-gray-100 py-3 text-sm font-bold text-center focus:outline-none focus:border-amber-500 transition-colors" placeholder="20% Vol / 75cl" />
+                    <div className="col-span-2 md:col-span-1 space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 italic text-left md:text-center block">Volume / Taille</label>
+                        <input value={newProduct.vol} onChange={e => setNewProduct({...newProduct, vol: e.target.value})} className="w-full border-b-2 border-gray-100 py-2 md:py-3 text-sm font-bold text-left md:text-center focus:outline-none focus:border-amber-500 transition-colors bg-transparent" placeholder="20% Vol / 75cl" />
                     </div>
                 </div>
               </form>
 
-              <div className="p-4 md:p-8 bg-gray-50 flex gap-4">
-                <Button onClick={() => setShowAddModal(false)} variant="outline" className="flex-1 italic py-4 md:py-3" disabled={uploading}>ANNULER</Button>
+              <div className="p-6 md:p-8 bg-gray-50 flex gap-4 shrink-0 pb-24 md:pb-8">
+                <Button onClick={() => setShowAddModal(false)} variant="outline" className="flex-1 italic py-4 md:py-3 border-gray-200" disabled={uploading}>ANNULER</Button>
                 <Button 
                     onClick={handleAddProduct} 
                     className="flex-1 bg-secondary text-white hover:bg-amber-500 border-none italic shadow-xl flex items-center justify-center gap-2 py-4 md:py-3"
@@ -377,10 +376,10 @@ const AdminProducts = () => {
                     {uploading ? (
                         <>
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            CRÉATION EN COURS...
+                            CRÉATION...
                         </>
                     ) : (
-                        "ENREGISTRER LA LÉGENDE"
+                        "ENREGISTRER"
                     )}
                 </Button>
               </div>

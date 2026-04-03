@@ -276,24 +276,72 @@ const InviteModal = () => {
                 </div>
               </div>
 
-              {/* Promo Highlight - Dynamic insertion */}
+              {/* Promo Highlight - Simplified for html2canvas */}
               {showPromo && selectedPromo && (
-                <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', border: '1px dashed #f59e0b', padding: '4px 12px' }}>
-                      <Sparkles size={12} color="#f59e0b" />
-                      <p style={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', color: '#ffffff', letterSpacing: '0.1em', margin: 0 }}>
-                         OFFRE : <span style={{ color: '#f59e0b' }}>{selectedPromo.discountType === 'percentage' ? `-${selectedPromo.discountValue}%` : `-${selectedPromo.discountValue}F`}</span> CODE : <span style={{ color: '#f59e0b' }}>{selectedPromo.id}</span>
-                      </p>
+                <div style={{ 
+                  height: '40px', 
+                  width: '320px',
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  zIndex: 10,
+                  marginTop: '5px'
+                }}>
+                   <div style={{ 
+                     border: '1px dashed #f59e0b', 
+                     padding: '0 10px',
+                     width: '280px',
+                     height: '28px',
+                     lineHeight: '28px',
+                     textAlign: 'center',
+                     whiteSpace: 'nowrap',
+                     overflow: 'hidden'
+                   }}>
+                      <span style={{ 
+                        fontSize: '11px', 
+                        fontWeight: '900', 
+                        textTransform: 'uppercase', 
+                        color: '#ffffff', 
+                        letterSpacing: '0.05em',
+                        margin: 0
+                      }}>
+                         OFFRE : <span style={{ color: '#f59e0b' }}>{selectedPromo.discountType === 'percentage' ? `-${selectedPromo.discountValue}%` : `-${selectedPromo.discountValue}F`}</span> 
+                         <span style={{ margin: '0 8px', color: '#f59e0b', opacity: 0.5 }}>|</span>
+                         CODE : <span style={{ color: '#f59e0b' }}>{selectedPromo.id}</span>
+                      </span>
                    </div>
                 </div>
               )}
 
-              {/* Footer Section */}
-              <div style={{ height: showPromo ? '60px' : '90px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', paddingBottom: '10px', zIndex: 10 }}>
-                <div style={{ backgroundColor: '#f59e0b', color: '#0a0a0a', padding: '6px 20px', marginBottom: '12px', display: 'inline-block' }}>
-                  <p style={{ fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.15em', fontStyle: 'italic', margin: 0 }}>
+              {/* Footer Section - Ultra Simple */}
+              <div style={{ 
+                height: showPromo ? '70px' : '100px', 
+                width: '320px', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                zIndex: 10 
+              }}>
+                <div style={{ 
+                  backgroundColor: '#f59e0b', 
+                  color: '#0a0a0a', 
+                  width: '240px',
+                  height: '32px',
+                  lineHeight: '32px',
+                  textAlign: 'center',
+                  marginBottom: '10px'
+                }}>
+                  <span style={{ 
+                    fontSize: '11px', 
+                    fontWeight: '900', 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '0.1em', 
+                    fontStyle: 'italic',
+                    whiteSpace: 'nowrap'
+                  }}>
                     Scannez pour commander
-                  </p>
+                  </span>
                 </div>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
