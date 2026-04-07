@@ -13,16 +13,19 @@ import Orders from './pages/admin/Orders';
 import AdminProducts from './pages/admin/Products';
 import Settings from './pages/admin/Settings';
 import Clients from './pages/admin/Clients';
+import OrderDetail from './pages/admin/OrderDetail';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
 import AdminLayout from './components/common/AdminLayout';
 import Login from './pages/admin/Login';
 import ScrollToTop from './components/common/ScrollToTop';
 import PWAInitializer from './components/common/PWAInitializer';
+import { Toaster } from 'react-hot-toast';
 
 function App() {
   return (
     <Router>
+      <Toaster position="top-right" />
       <ScrollToTop />
       <PWAInitializer />
       <div className="flex flex-col min-h-screen">
@@ -56,6 +59,7 @@ function App() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="orders" element={<Orders />} />
+            <Route path="orders/:id" element={<OrderDetail />} />
             <Route path="products" element={<AdminProducts />} />
             <Route path="clients" element={<Clients />} />
             <Route path="settings" element={<Settings />} />

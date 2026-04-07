@@ -101,25 +101,9 @@ const INITIAL_PRODUCTS = [
   }
 ];
 
-const INITIAL_ORDERS = [
-  {
-    id: 'MTK-8821',
-    customer: { firstName: 'Kodjo', lastName: 'Agbéyomé', city: 'Lomé' },
-    items: [INITIAL_PRODUCTS[0]],
-    total: 27500,
-    status: 'Livrée',
-    paymentStatus: 'Payé',
-    date: new Date(Date.now() - 86400000 * 2).toISOString()
-  },
-  {
-    id: 'MTK-4532',
-    customer: { firstName: 'Afiwa', lastName: 'Mensah', city: 'Kpalimé' },
-    items: [INITIAL_PRODUCTS[2]],
-    total: 12500,
-    status: 'En préparation',
-    paymentStatus: 'Non payé',
-    date: new Date(Date.now() - 86400000).toISOString()
-  }
+const INITIAL_CATEGORIES = [
+  { id: 'fruitee', name: 'Fruitée' },
+  { id: 'speciale', name: 'Spéciale' }
 ];
 
 // --- API FUNCTIONS ---
@@ -231,6 +215,26 @@ export const api = {
     }
   },
 
+  getOrderById: async (id) => {
+    try {
+      const docRef = doc(db, 'orders', id);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        return { 
+          ...data, 
+          id: docSnap.id,
+          paymentStatus: data.paymentStatus || data.payment_status || 'Non payé'
+        };
+      } else {
+        throw new Error('Commande non trouvée');
+      }
+    } catch (error) {
+      console.error("Error fetching order:", error);
+      throw error;
+    }
+  },
+
   createOrder: async (orderData) => {
     try {
       // On utilise l'ID déjà généré par le Checkout si présent, sinon on en crée un
@@ -333,6 +337,47 @@ export const api = {
       }
     } catch (error) {
       console.error("Error validating promo code:", error);
+      throw error;
+    }
+  },
+
+  // Catégories
+  getCategories: async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'categories'));
+      let categories = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+      
+      if (categories.length === 0) {
+        for (const cat of INITIAL_CATEGORIES) {
+          await setDoc(doc(db, 'categories', cat.id), cat);
+        }
+        return INITIAL_CATEGORIES;
+      }
+      return categories;
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      throw error;
+    }
+  },
+
+  updateCategory: async (categoryData) => {
+    try {
+      const id = categoryData.id || categoryData.name.toLowerCase().replace(/\s+/g, '-');
+      await setDoc(doc(db, 'categories', id), { ...categoryData, id });
+      return { ...categoryData, id };
+    } catch (error) {
+      console.error("Error updating category:", error);
+      throw error;
+    }
+  },
+
+  deleteCategory: async (id) => {
+    try {
+      const { deleteDoc } = await import('firebase/firestore');
+      await deleteDoc(doc(db, 'categories', id));
+      return true;
+    } catch (error) {
+      console.error("Error deleting category:", error);
       throw error;
     }
   }

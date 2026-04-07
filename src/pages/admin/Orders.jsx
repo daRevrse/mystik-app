@@ -8,8 +8,11 @@ import {
   Search, Clock, Star, Plus, X, Download, FileText, CreditCard 
 } from 'lucide-react';
 import { ReceiptService } from '../../services/ReceiptService';
+import { Html5QrcodeScanner } from "html5-qrcode";
+import { useNavigate, Link } from 'react-router-dom';
 
 const Orders = () => {
+  const navigate = useNavigate();
   const { 
     orders, fetchOrders, updateStatus, isLoading, 
     addOrder, togglePaymentStatus, products, fetchProducts,
@@ -20,6 +23,7 @@ const Orders = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMobileOrder, setSelectedMobileOrder] = useState(null);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
   
   // Formulaire de création
   const [newOrder, setNewOrder] = useState({
@@ -66,6 +70,37 @@ const Orders = () => {
     });
   };
 
+  useEffect(() => {
+    let scanner = null;
+    if (isScannerOpen) {
+      scanner = new Html5QrcodeScanner("reader", { 
+        fps: 10, 
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0
+      });
+
+      scanner.render((decodedText) => {
+        // Format du QR Code : "ID:xxxxxx"
+        if (decodedText.startsWith("ID:")) {
+          const orderId = decodedText.replace("ID:", "");
+          scanner.clear();
+          setIsScannerOpen(false);
+          navigate(`/admin/orders/${orderId}`);
+        } else {
+          toast.error("Format de QR Code invalide");
+        }
+      }, (error) => {
+        // En silence pour les erreurs de scan continu
+      });
+    }
+
+    return () => {
+      if (scanner) {
+        scanner.clear().catch(error => console.error("Failed to clear scanner", error));
+      }
+    };
+  }, [isScannerOpen, navigate]);
+
   return (
     <div className="space-y-12 animate-fade-in pb-20">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
@@ -102,6 +137,14 @@ const Orders = () => {
           >
             <Plus className="w-4 h-4" />
             Nouvel Honneur
+          </Button>
+
+          <Button 
+            onClick={() => setIsScannerOpen(true)}
+            className="w-full md:w-auto bg-secondary hover:bg-amber-500 text-white px-8 py-4 text-[10px] font-bold tracking-[0.2em] uppercase italic flex items-center justify-center gap-3 border-none shadow-2xl transition-all"
+          >
+            <Search className="w-4 h-4" />
+            Scanner Reçu
           </Button>
         </div>
       </div>
@@ -145,7 +188,9 @@ const Orders = () => {
                 filteredOrders.map(order => (
                   <tr key={order.id} className="hover:bg-[#fafaf9] transition-colors group">
                     <td className="px-10 py-8">
-                      <p className="text-xs font-bold text-secondary tracking-tight group-hover:text-amber-600 transition-colors underline decoration-amber-500/30 decoration-2 underline-offset-8 italic">{order.id}</p>
+                      <Link to={`/admin/orders/${order.id}`}>
+                        <p className="text-xs font-bold text-secondary tracking-tight group-hover:text-amber-600 transition-colors underline decoration-amber-500/30 decoration-2 underline-offset-8 italic hover:text-amber-500 transition-colors uppercase">{order.id}</p>
+                      </Link>
                       <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-2">{new Date(order.date).toLocaleDateString('fr-FR')}</p>
                     </td>
                     <td className="px-10 py-8">
@@ -207,9 +252,11 @@ const Orders = () => {
                           </Button>
                         )}
                         
-                        <Button variant="ghost" size="sm" className="h-10 w-10 p-0 hover:bg-gray-100 border border-gray-100">
-                          <Eye className="w-4 h-4 text-gray-400" />
-                        </Button>
+                        <Link to={`/admin/orders/${order.id}`}>
+                          <Button variant="ghost" size="sm" className="h-10 w-10 p-0 hover:bg-gray-100 border border-gray-100">
+                            <Eye className="w-4 h-4 text-gray-400" />
+                          </Button>
+                        </Link>
                       </div>
                     </td>
                   </tr>
@@ -228,7 +275,9 @@ const Orders = () => {
               <div key={order.id} className="p-6 space-y-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-xs font-black text-secondary italic tracking-tight uppercase underline decoration-amber-500/30 underline-offset-4">{order.id}</p>
+                    <Link to={`/admin/orders/${order.id}`}>
+                      <p className="text-xs font-black text-secondary italic tracking-tight uppercase underline decoration-amber-500/30 underline-offset-4">{order.id}</p>
+                    </Link>
                     <p className="text-[9px] text-gray-400 font-bold uppercase mt-1">{new Date(order.date).toLocaleDateString('fr-FR')}</p>
                   </div>
                   <Badge variant={order.paymentStatus === 'Payé' ? 'success' : 'warning'} className="text-[8px] italic tracking-tighter">
@@ -431,6 +480,34 @@ const Orders = () => {
                 )}
               </div>
             </form>
+          </Card>
+        </div>
+      )}
+
+      {/* Scanner QR Code Modal */}
+      {isScannerOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-secondary/95 backdrop-blur-md" onClick={() => setIsScannerOpen(false)} />
+          <Card className="relative w-full max-w-lg bg-white p-8 shadow-2xl animate-scale-up rounded-none">
+            <button 
+              onClick={() => setIsScannerOpen(false)}
+              className="absolute right-6 top-6 text-gray-400 hover:text-secondary z-20"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            <div className="text-center mb-8">
+              <h2 className="text-xl font-display font-bold uppercase italic tracking-tight">
+                Vérification <span className="text-amber-500">Scanner</span>
+              </h2>
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-2">Placez le QR Code de la facture devant la caméra</p>
+            </div>
+
+            <div id="reader" className="overflow-hidden border-2 border-gray-100 shadow-inner bg-gray-50 aspect-square"></div>
+            
+            <p className="text-[8px] font-bold text-gray-300 uppercase tracking-[0.3em] text-center mt-8 italic">
+              Système de vérification Mystik v2.0
+            </p>
           </Card>
         </div>
       )}

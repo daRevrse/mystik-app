@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
-import { Lock, Save, Bell, Ticket, Trash2, Plus, Percent, Wallet } from 'lucide-react';
+import { Lock, Save, Bell, Ticket, Trash2, Plus, Percent, Wallet, Tag } from 'lucide-react';
 import { api } from '../../services/api';
 import { requestNotificationPermission } from '../../utils/firebase';
 
@@ -17,6 +17,11 @@ const Settings = () => {
   const [newPromo, setNewPromo] = useState({ id: '', discountType: 'percentage', discountValue: 0, isActive: true });
   const [loadingPromos, setLoadingPromos] = useState(false);
   const [promoError, setPromoError] = useState('');
+  
+  // Categories State
+  const [categories, setCategories] = useState([]);
+  const [newCategory, setNewCategory] = useState({ name: '' });
+  const [loadingCats, setLoadingCats] = useState(false);
 
   useEffect(() => {
     const currentParam = localStorage.getItem('mystikPassword') || 'mystik2024';
@@ -31,9 +36,19 @@ const Settings = () => {
     if ('Notification' in window && Notification.permission === 'granted') {
       setFcmStatus('Activé');
     }
-
+    
     fetchPromos();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const data = await api.getCategories();
+      setCategories(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const fetchPromos = async () => {
     try {
@@ -104,6 +119,32 @@ const Settings = () => {
       fetchPromos();
     } catch (err) {
       alert("Erreur de mise à jour");
+    }
+  };
+
+  const handleAddCategory = async (e) => {
+    e.preventDefault();
+    if (!newCategory.name) return;
+    setLoadingCats(true);
+    try {
+      await api.updateCategory(newCategory);
+      setNewCategory({ name: '' });
+      fetchCategories();
+    } catch (err) {
+      alert("Erreur lors de la création de la catégorie");
+    } finally {
+      setLoadingCats(false);
+    }
+  };
+
+  const handleDeleteCategory = async (id) => {
+    if (window.confirm(`Supprimer la catégorie ? Les produits existants garderont leur ancienne catégorie.`)) {
+      try {
+        await api.deleteCategory(id);
+        fetchCategories();
+      } catch (err) {
+        alert("Erreur lors de la suppression");
+      }
     }
   };
 
@@ -323,6 +364,58 @@ const Settings = () => {
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Categories Section */}
+      <h2 className="text-2xl font-display font-bold text-secondary uppercase italic mt-12 flex items-center gap-3">
+        <Tag className="w-6 h-6 text-blue-500" />
+        Gestion des Catégories
+      </h2>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-20">
+        <Card className="p-8 border-none shadow-xl rounded-none bg-white">
+          <h3 className="text-xs font-black uppercase tracking-widest text-secondary mb-6">
+            Nouvelle Catégorie
+          </h3>
+          <form onSubmit={handleAddCategory} className="space-y-4">
+            <div>
+              <label className="block text-[10px] font-bold text-gray-400 tracking-widest uppercase mb-2">Nom de la catégorie</label>
+              <input
+                type="text"
+                value={newCategory.name}
+                onChange={(e) => setNewCategory({ name: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-200 focus:border-blue-500 outline-none rounded-none font-bold uppercase tracking-widest text-xs"
+                placeholder="EX: ÉPICÉ, DOUX, ETC."
+                required
+              />
+            </div>
+            <Button 
+              type="submit" 
+              disabled={loadingCats}
+              className="w-full bg-blue-600 text-white hover:bg-black rounded-none mt-4 font-black"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              AJOUTER
+            </Button>
+          </form>
+        </Card>
+
+        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {categories.map((cat) => (
+            <Card key={cat.id} className="p-6 border-none shadow-lg rounded-none bg-white flex justify-between items-center">
+              <div>
+                <h4 className="text-sm font-black text-secondary tracking-tighter uppercase italic">{cat.name}</h4>
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">ID: {cat.id}</p>
+              </div>
+              <button 
+                onClick={() => handleDeleteCategory(cat.id)}
+                className="p-2 text-gray-300 hover:text-red-500 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </Card>
+          ))}
         </div>
       </div>
     </div>

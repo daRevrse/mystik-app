@@ -113,7 +113,7 @@ const Checkout = () => {
         } else {
             // CASH ON DELIVERY
             paymentStatus = 'Non Payé';
-            txRef = 'Paiement à la livraison';
+            txRef = wantsDelivery ? 'Paiement à la livraison' : 'Paiement à la boutique';
         }
 
         // 2. ENREGISTREMENT DE LA COMMANDE
@@ -139,8 +139,8 @@ const Checkout = () => {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                 title: `🔥 ${selectedNetwork === 'COD' ? 'Nouvelle Facture' : 'Nouvelle Commande'} (${formatPrice(grandTotal)})`,
-                 body: `Client: ${formData.firstName} ${formData.lastName} | Paiement: ${selectedNetwork === 'COD' ? 'À la livraison' : selectedNetwork}`,
+                 title: `🔥 ${selectedNetwork === 'COD' ? (wantsDelivery ? 'Livraison à domicile' : 'Retrait en boutique') : 'Nouvelle Commande'} (${formatPrice(grandTotal)})`,
+                 body: `Client: ${formData.firstName} ${formData.lastName} | Paiement: ${selectedNetwork === 'COD' ? (wantsDelivery ? 'À la livraison' : 'À la boutique') : selectedNetwork}`,
                  token: localStorage.getItem('mystikAdminFCMToken') 
               })
            });
@@ -313,13 +313,13 @@ const Checkout = () => {
                     <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-100 shadow-md bg-secondary text-white flex items-center justify-center">
                       <Truck className="w-8 h-8" />
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest">À la livraison</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest">{wantsDelivery ? 'À la livraison' : 'À la boutique'}</span>
                   </button>
                 </div>
 
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] leading-relaxed italic opacity-80 max-w-sm mt-4">
                   {selectedNetwork === 'COD' 
-                      ? <span className="text-primary-600 block mb-2 text-xs">✓ Paiement à réception des bouteilles</span>
+                      ? <span className="text-primary-600 block mb-2 text-xs">✓ {wantsDelivery ? 'Paiement à réception des bouteilles' : 'Paiement lors du retrait en boutique'}</span>
                       : <span>Seul le paiement à la livraison est disponible pour le moment.</span>}
                 </p>
               </div>
@@ -440,7 +440,7 @@ const Checkout = () => {
                 >
                   {loading ? 'COMMANDE EN COURS...' : !selectedNetwork ? 'CHOISIR UN PAIEMENT' : (
                     <span className="flex items-center justify-center">
-                      {selectedNetwork === 'COD' ? 'CONFIRMER LA COMMANDE' : `PAYER VIA ${selectedNetwork}`}
+                      {selectedNetwork === 'COD' ? (wantsDelivery ? 'CONFIRMER LA LIVRAISON' : 'CONFIRMER LE RETRAIT') : `PAYER VIA ${selectedNetwork}`}
                       <ChevronRight className="ml-2 w-6 h-6" />
                     </span>
                   )}

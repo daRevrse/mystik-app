@@ -11,26 +11,30 @@ const Home = () => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState(['Tous']);
   const [activeCategory, setActiveCategory] = useState('Tous');
   const { addItem } = useCartStore();
   const navigate = useNavigate();
 
-  const categories = ['Tous', 'Fruitée', 'Spéciale'];
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const data = await api.getProducts();
-        setProducts(data);
-        setFilteredProducts(data);
+        const [productsData, categoriesData] = await Promise.all([
+          api.getProducts(),
+          api.getCategories()
+        ]);
+        setProducts(productsData);
+        setFilteredProducts(productsData);
+        setCategories(['Tous', ...categoriesData.map(c => c.name)]);
       } catch (error) {
-        console.error("Erreur lors de la récupération des produits", error);
+        console.error("Erreur lors de la récupération des données", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchProducts();
+    fetchData();
   }, []);
 
   useEffect(() => {

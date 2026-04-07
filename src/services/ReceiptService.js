@@ -9,6 +9,7 @@ export const ReceiptService = {
   generateQRCode: async (order) => {
     const isPaid = order.paymentStatus === 'Payé';
     const qrData = [
+      `ID:${order.id}`,
       `MYSTIK LEGEND'S DRINK`,
       `Réf: ${order.id}`,
       `Client: ${order.customer?.firstName} ${order.customer?.lastName}`,
@@ -131,13 +132,19 @@ export const ReceiptService = {
             <span style="font-size: 12px; color: #6b7280;">Sous-total :</span>
             <span style="font-size: 12px; font-weight: 700;">${new Intl.NumberFormat('fr-FR').format(subtotal)} FCFA</span>
           </div>
+          ${order.discount_amount > 0 ? `
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #d97706;">
+            <span style="font-size: 12px;">Remise :</span>
+            <span style="font-size: 12px; font-weight: 700;">-${new Intl.NumberFormat('fr-FR').format(order.discount_amount)} FCFA</span>
+          </div>
+          ` : ''}
           <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
             <span style="font-size: 12px; color: #6b7280;">Taxes (0%) :</span>
             <span style="font-size: 12px; font-weight: 700;">0 FCFA</span>
           </div>
           <div style="display: flex; justify-content: space-between; border-top: 2px solid #0a0a0a; padding-top: 15px;">
             <span style="font-size: 14px; font-weight: 800; text-transform: uppercase;">TOTAL NET :</span>
-            <span style="font-size: 20px; font-weight: 900; color: #d4af37;">${new Intl.NumberFormat('fr-FR').format(subtotal)} FCFA</span>
+            <span style="font-size: 20px; font-weight: 900; color: #d4af37;">${new Intl.NumberFormat('fr-FR').format(order.total)} FCFA</span>
           </div>
         </div>
       </div>

@@ -27,6 +27,7 @@ const AdminProducts = () => {
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const fileInputRef = useRef(null);
+  const [categories, setCategories] = useState([]);
 
   const [newProduct, setNewProduct] = useState({
     name: '',
@@ -42,7 +43,11 @@ const AdminProducts = () => {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      await fetchProducts();
+      const [prods, cats] = await Promise.all([
+        fetchProducts(),
+        api.getCategories()
+      ]);
+      setCategories(cats);
       setLoading(false);
     };
     load();
@@ -108,7 +113,7 @@ const AdminProducts = () => {
           name: '',
           description: '',
           price: '',
-          category: 'Fruitée',
+          category: categories[0]?.name || 'Fruitée',
           stock: '',
           vol: '20% Vol',
           size: '75cl',
@@ -339,8 +344,9 @@ const AdminProducts = () => {
                     <div className="space-y-2">
                         <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 italic">Catégorie</label>
                         <select value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className="w-full border-b-2 border-gray-100 py-2 md:py-3 text-sm font-bold uppercase focus:outline-none focus:border-amber-500 transition-colors bg-transparent">
-                            <option value="Fruitée">Fruitée</option>
-                            <option value="Spéciale">Spéciale</option>
+                            {categories.map(cat => (
+                                <option key={cat.id} value={cat.name}>{cat.name}</option>
+                            ))}
                         </select>
                     </div>
                 </div>
