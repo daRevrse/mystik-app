@@ -26,12 +26,14 @@ export default async function handler(req, res) {
     }
 
     // 3. Préparation du Payload pour la méthode "USSD Push"
+    // Note: L'URL de retour (Callback) est configurée sur le portail PayGate 
+    // ou passée via un champ spécifique si supporté par votre contrat.
     const payload = {
       auth_token: PAYGATE_AUTH_TOKEN,
       phone_number: cleanPhone,
       amount: amount,
       description: `Commande Mystik #${orderId}`,
-      identifier: orderId,
+      identifier: orderId, // Cet ID sera renvoyé dans le callback
       network: network ? network.toUpperCase() : 'TMONEY'
     };
 

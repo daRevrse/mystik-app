@@ -72,14 +72,9 @@ const Checkout = () => {
     e.preventDefault();
     if (items.length === 0) return;
     
-    if (!selectedNetwork) {
+    // Retrait du blocage pour les réseaux mobiles
+    if (selectedNetwork === null) {
        alert("Veuillez sélectionner un mode de paiement pour procéder.");
-       return;
-    }
-
-    // Seul COD est disponible actuellement
-    if (selectedNetwork !== 'COD') {
-       alert("Ce mode de paiement sera bientôt disponible. Veuillez choisir 'À la livraison'.");
        return;
     }
 
@@ -89,6 +84,7 @@ const Checkout = () => {
     try {
         let paymentStatus = 'Payé';
         let txRef = transactionId;
+        let orderStatus = 'En attente'; // Statut par défaut de la commande
 
         // 1. GESTION DES MODES DE PAIEMENT
         if (selectedNetwork !== 'COD') {
@@ -110,10 +106,12 @@ const Checkout = () => {
                 throw new Error(paygateData.error || "Échec de l'initialisation du paiement.");
             }
             txRef = paygateData.tx_reference || transactionId;
+            paymentStatus = 'En attente de validation'; // On attend le callback PayGate
         } else {
             // CASH ON DELIVERY
             paymentStatus = 'Non Payé';
             txRef = wantsDelivery ? 'Paiement à la livraison' : 'Paiement à la boutique';
+            orderStatus = 'En attente';
         }
 
         // 2. ENREGISTREMENT DE LA COMMANDE
@@ -126,6 +124,7 @@ const Checkout = () => {
           promo_code: appliedPromo ? appliedPromo.id : null,
           transaction_id: txRef,
           paymentStatus: paymentStatus, 
+          status: orderStatus, // Ajout du statut explicite
           payment_network: selectedNetwork,
           delivery_requested: wantsDelivery,
           date: new Date().toISOString()
@@ -267,27 +266,37 @@ const Checkout = () => {
               </div>
               <div className="p-10 bg-[#fafaf9] border-2 border-dashed border-gray-100 flex flex-col items-center justify-center text-center space-y-6">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
-                  {/* Flooz - Bientôt disponible */}
-                  <div className="relative flex flex-col items-center gap-3 p-4 rounded-xl bg-white/40 grayscale opacity-40 cursor-not-allowed">
-                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                      <span className="bg-secondary text-white text-[7px] font-bold tracking-widest uppercase px-2 py-0.5">Bientôt</span>
-                    </div>
+                  {/* Flooz - Activé */}
+                  <button 
+                      type="button" 
+                      onClick={() => setSelectedNetwork('FLOOZ')}
+                      className={`relative flex flex-col items-center gap-3 p-4 rounded-xl transition-all duration-300 shadow-sm ${selectedNetwork === 'FLOOZ' ? 'bg-white ring-4 ring-primary-500 scale-105' : 'bg-white/80 hover:bg-white hover:shadow-md'}`}>
+                    {selectedNetwork === 'FLOOZ' && (
+                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                        <span className="bg-primary-500 text-secondary text-[7px] font-bold tracking-widest uppercase px-2 py-0.5">Sélectionné</span>
+                      </div>
+                    )}
                     <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-100 shadow-md">
                       <img src="/images/moov.jpg" alt="Flooz" className="w-full h-full object-cover" />
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-widest">Flooz</span>
-                  </div>
+                  </button>
 
-                  {/* T-Money - Bientôt disponible */}
-                  <div className="relative flex flex-col items-center gap-3 p-4 rounded-xl bg-white/40 grayscale opacity-40 cursor-not-allowed">
-                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                      <span className="bg-secondary text-white text-[7px] font-bold tracking-widest uppercase px-2 py-0.5">Bientôt</span>
-                    </div>
+                  {/* T-Money - Activé */}
+                  <button 
+                      type="button" 
+                      onClick={() => setSelectedNetwork('TMONEY')}
+                      className={`relative flex flex-col items-center gap-3 p-4 rounded-xl transition-all duration-300 shadow-sm ${selectedNetwork === 'TMONEY' ? 'bg-white ring-4 ring-primary-500 scale-105' : 'bg-white/80 hover:bg-white hover:shadow-md'}`}>
+                    {selectedNetwork === 'TMONEY' && (
+                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                        <span className="bg-primary-500 text-secondary text-[7px] font-bold tracking-widest uppercase px-2 py-0.5">Sélectionné</span>
+                      </div>
+                    )}
                     <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-100 shadow-md">
                       <img src="/images/yas.jpg" alt="T-Money" className="w-full h-full object-cover" />
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-widest">T-Money</span>
-                  </div>
+                  </button>
 
                   {/* Carte Bancaire - Bientôt disponible */}
                   <div className="relative flex flex-col items-center gap-3 p-4 rounded-xl bg-white/40 grayscale opacity-40 cursor-not-allowed">
@@ -320,7 +329,7 @@ const Checkout = () => {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] leading-relaxed italic opacity-80 max-w-sm mt-4">
                   {selectedNetwork === 'COD' 
                       ? <span className="text-primary-600 block mb-2 text-xs">✓ {wantsDelivery ? 'Paiement à réception des bouteilles' : 'Paiement lors du retrait en boutique'}</span>
-                      : <span>Seul le paiement à la livraison est disponible pour le moment.</span>}
+                      : selectedNetwork ? <span className="text-primary-600 block mb-2 text-xs">✓ Paiement via {selectedNetwork}</span> : <span>Sélectionnez votre mode de paiement préféré.</span>}
                 </p>
               </div>
             </Card>
