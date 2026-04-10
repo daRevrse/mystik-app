@@ -40,8 +40,11 @@ export default async function handler(req, res) {
   FedaPay.setEnvironment(FEDAPAY_ENVIRONMENT);
 
   try {
-    // URL de base de l'application (pour les callbacks)
-    const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'https://mystikdrinks.com';
+    // URL de base de l'application (pour les callbacks et redirections)
+    // IMPORTANT : Configurez APP_URL=https://mystikdrinks.com sur Vercel
+    const BASE_URL = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://mystikdrinks.com';
+
+    console.log(`[FedaPay Checkout] Utilisation de BASE_URL: ${BASE_URL}`);
 
     // Frais FedaPay approximatifs : 1.5% du montant (affichés côté frontend)
     // La transaction FedaPay est créée avec le montant HT, les frais sont à la charge du client

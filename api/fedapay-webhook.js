@@ -57,8 +57,13 @@ export default async function handler(req, res) {
   const FEDAPAY_ENVIRONMENT = process.env.FEDAPAY_ENVIRONMENT || 'sandbox';
 
   if (!FEDAPAY_WEBHOOK_SECRET) {
-    console.error('[FedaPay Webhook] FEDAPAY_WEBHOOK_SECRET manquant !');
+    console.error('[FedaPay Webhook] CRITICAL: FEDAPAY_WEBHOOK_SECRET manquant !');
     return res.status(500).json({ error: 'Configuration webhook manquante.' });
+  }
+
+  if (!FEDAPAY_SECRET_KEY) {
+    console.error('[FedaPay Webhook] CRITICAL: FEDAPAY_SECRET_KEY manquant !');
+    return res.status(500).json({ error: 'Configuration API FedaPay manquante.' });
   }
 
   // ─── 1. Lire le body brut ─────────────────────────────────────────────────
@@ -87,7 +92,8 @@ export default async function handler(req, res) {
       FEDAPAY_WEBHOOK_SECRET
     );
   } catch (err) {
-    console.error('[FedaPay Webhook] Signature invalide :', err.message);
+    console.error(`[FedaPay Webhook] Signature invalide (Secret used: ...${FEDAPAY_WEBHOOK_SECRET.slice(-4)}) :`, err.message);
+    // On peut retourner 400 pour que FedaPay réessaie, ou 202 pour arrêter les relances si on suspecte une config erreur
     return res.status(400).json({ error: `Signature invalide : ${err.message}` });
   }
 
