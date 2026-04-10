@@ -55,7 +55,8 @@ export default async function handler(req, res) {
       amount: Math.round(amount),
       currency: { iso: 'XOF' },
       // URL appelée par FedaPay après le paiement (succès ou échec)
-      callback_url: `${BASE_URL}/api/fedapay-webhook`,
+      // On y ajoute l'orderId pour gérer le cas où FedaPay redirige le client ici
+      callback_url: `${BASE_URL}/api/fedapay-webhook?orderId=${orderId}`,
       // URL de redirection après le paiement réussi
       redirect_url: `${BASE_URL}/success?orderId=${orderId}`,
       // URL de redirection si le client annule (si supporté par le SDK/API Checkout)

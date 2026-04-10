@@ -48,6 +48,19 @@ function getRawBody(req) {
 }
 
 export default async function handler(req, res) {
+  // ─── Gestion de la redirection navigateur (GET) ───────────────────────────
+  // FedaPay peut rediriger le client vers cette URL avec des params query.
+  if (req.method === 'GET') {
+    const { status, id, orderId } = req.query;
+    console.log(`[FedaPay Webhook] Redirection navigateur reçue: status=${status}, orderId=${orderId}`);
+
+    if (status === 'approved') {
+      return res.redirect(`/success?orderId=${orderId}&transaction_id=${id}`);
+    } else {
+      return res.redirect(`/payment-cancelled?orderId=${orderId}`);
+    }
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
