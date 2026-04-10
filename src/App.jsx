@@ -15,6 +15,7 @@ import AdminProducts from './pages/admin/Products';
 import Settings from './pages/admin/Settings';
 import Clients from './pages/admin/Clients';
 import OrderDetail from './pages/admin/OrderDetail';
+import Caisse from './pages/admin/Caisse';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
 import AdminLayout from './components/common/AdminLayout';
@@ -64,6 +65,7 @@ function App() {
             <Route path="orders/:id" element={<OrderDetail />} />
             <Route path="products" element={<AdminProducts />} />
             <Route path="clients" element={<Clients />} />
+            <Route path="caisse" element={<Caisse />} />
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>
