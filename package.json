@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "fedapay": "^1.2.5",
     "firebase": "^12.11.0",
     "firebase-admin": "^13.7.0",
     "html2canvas": "^1.4.1",

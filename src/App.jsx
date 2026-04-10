@@ -3,6 +3,7 @@ import Home from './pages/client/Home';
 import Product from './pages/client/Product';
 import Checkout from './pages/client/Checkout';
 import Success from './pages/client/Success';
+import PaymentCancelled from './pages/client/PaymentCancelled';
 import About from './pages/client/About';
 import PointsDeVente from './pages/client/PointsDeVente';
 import Livraison from './pages/client/Livraison';
@@ -43,6 +44,7 @@ function App() {
                     <Route path="/product/:id" element={<Product />} />
                     <Route path="/checkout" element={<Checkout />} />
                     <Route path="/success" element={<Success />} />
+                    <Route path="/payment-cancelled" element={<PaymentCancelled />} />
                     <Route path="/points-de-vente" element={<PointsDeVente />} />
                     <Route path="/livraison" element={<Livraison />} />
                     <Route path="/contact" element={<Contact />} />

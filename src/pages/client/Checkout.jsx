@@ -41,8 +41,13 @@ const Checkout = () => {
 
   const cartTotal = getCartTotal();
   const discoutAmount = getDiscountAmount();
-  const transactionFee = 0; 
-  const grandTotal = getDiscountedTotal() + transactionFee;
+  // Frais FedaPay indicatifs : 1.5% (appliqués uniquement pour les paiements mobile)
+  const fedapayFeeRate = 0.015;
+  const subtotalAfterDiscount = getDiscountedTotal();
+  const transactionFee = selectedNetwork && selectedNetwork !== 'COD'
+    ? Math.round(subtotalAfterDiscount * fedapayFeeRate)
+    : 0;
+  const grandTotal = subtotalAfterDiscount + transactionFee;
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -71,103 +76,139 @@ const Checkout = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (items.length === 0) return;
-    
-    // Retrait du blocage pour les réseaux mobiles
+
     if (selectedNetwork === null) {
-       alert("Veuillez sélectionner un mode de paiement pour procéder.");
-       return;
+      alert('Veuillez sélectionner un mode de paiement pour procéder.');
+      return;
     }
 
     setLoading(true);
     const transactionId = `MTK-${Math.floor(100000 + Math.random() * 900000)}`;
 
     try {
-        let paymentStatus = 'Payé';
-        let txRef = transactionId;
-        let orderStatus = 'En attente'; // Statut par défaut de la commande
+      let paymentStatus;
+      let txRef = transactionId;
+      let orderStatus = 'En attente';
 
-        // 1. GESTION DES MODES DE PAIEMENT
-        if (selectedNetwork !== 'COD') {
-            // APPEL RÉEL PAYGATE GLOBAL
-            const paygateRes = await fetch('/api/paygate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    amount: grandTotal,
-                    orderId: transactionId,
-                    phone: formData.phone,
-                    network: selectedNetwork
-                })
-            });
+      // ─── 1. PAIEMENT MOBILE MONEY VIA FEDAPAY ────────────────────────────
+      if (selectedNetwork !== 'COD') {
+        const fedapayRes = await fetch('/api/fedapay-checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: grandTotal,          // Montant incluant les frais de service
+            orderId: transactionId,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            phone: formData.phone,
+          }),
+        });
 
-            const paygateData = await paygateRes.json();
+        const fedapayData = await fedapayRes.json();
 
-            if (!paygateRes.ok || !paygateData.success) {
-                throw new Error(paygateData.error || "Échec de l'initialisation du paiement.");
-            }
-            txRef = paygateData.tx_reference || transactionId;
-            paymentStatus = 'En attente de validation'; // On attend le callback PayGate
-        } else {
-            // CASH ON DELIVERY
-            paymentStatus = 'Non Payé';
-            txRef = wantsDelivery ? 'Paiement à la livraison' : 'Paiement à la boutique';
-            orderStatus = 'En attente';
+        if (!fedapayRes.ok || !fedapayData.success) {
+          throw new Error(fedapayData.error || "Échec de l'initialisation du paiement FedaPay.");
         }
 
-        // 2. ENREGISTREMENT DE LA COMMANDE
+        txRef = String(fedapayData.transaction_id) || transactionId;
+        paymentStatus = 'En attente de validation';
+
+        // ─── 2. ENREGISTREMENT DE LA COMMANDE (avant redirection) ──────────
         const orderData = {
           id: transactionId,
           customer: formData,
           items,
           total: grandTotal,
           discount_amount: discoutAmount,
+          transaction_fee: transactionFee,
           promo_code: appliedPromo ? appliedPromo.id : null,
           transaction_id: txRef,
-          paymentStatus: paymentStatus, 
-          status: orderStatus, // Ajout du statut explicite
+          paymentStatus,
+          status: orderStatus,
+          payment_method: 'FEDAPAY',
           payment_network: selectedNetwork,
           delivery_requested: wantsDelivery,
-          date: new Date().toISOString()
+          date: new Date().toISOString(),
         };
-        
-        const newOrder = await api.createOrder(orderData);
-        
-        // 3. Notification Push Admin
+
+        await api.createOrder(orderData);
+
+        // ─── 3. Notification Push Admin ─────────────────────────────────────
         try {
-           await fetch('/api/notify', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                 title: `🔥 ${selectedNetwork === 'COD' ? (wantsDelivery ? 'Livraison à domicile' : 'Retrait en boutique') : 'Nouvelle Commande'} (${formatPrice(grandTotal)})`,
-                 body: `Client: ${formData.firstName} ${formData.lastName} | Paiement: ${selectedNetwork === 'COD' ? (wantsDelivery ? 'À la livraison' : 'À la boutique') : selectedNetwork}`,
-                 token: localStorage.getItem('mystikAdminFCMToken') 
-              })
-           });
+          await fetch('/api/notify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title: `🔥 Nouvelle Commande FedaPay (${formatPrice(grandTotal)})`,
+              body: `Client: ${formData.firstName} ${formData.lastName} | Réseau: ${selectedNetwork}`,
+              token: localStorage.getItem('mystikAdminFCMToken'),
+            }),
+          });
         } catch (pushErr) {
-           console.warn("Échec requête Push Admin:", pushErr);
+          console.warn('Échec Push Admin:', pushErr);
         }
 
-        // 4. Envoi Email Copie (Simulé)
+        // ─── 4. Vider le panier PUIS rediriger vers FedaPay ─────────────────
+        clearCart();
+        window.location.href = fedapayData.payment_url;
+        return; // Fin de la fonction ici, la redirection gère la suite
+
+      } else {
+        // ─── CASH ON DELIVERY ───────────────────────────────────────────────
+        paymentStatus = 'Non Payé';
+        txRef = wantsDelivery ? 'Paiement à la livraison' : 'Paiement à la boutique';
+
+        const orderData = {
+          id: transactionId,
+          customer: formData,
+          items,
+          total: grandTotal,
+          discount_amount: discoutAmount,
+          transaction_fee: 0,
+          promo_code: appliedPromo ? appliedPromo.id : null,
+          transaction_id: txRef,
+          paymentStatus,
+          status: orderStatus,
+          payment_method: 'COD',
+          payment_network: 'COD',
+          delivery_requested: wantsDelivery,
+          date: new Date().toISOString(),
+        };
+
+        const newOrder = await api.createOrder(orderData);
+
         try {
-           await fetch('/api/send-email', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                 order: newOrder,
-                 type: selectedNetwork === 'COD' ? 'invoice' : 'receipt'
-              })
-           });
+          await fetch('/api/notify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title: `🔥 ${wantsDelivery ? 'Livraison à domicile' : 'Retrait en boutique'} (${formatPrice(grandTotal)})`,
+              body: `Client: ${formData.firstName} ${formData.lastName} | Paiement: ${wantsDelivery ? 'À la livraison' : 'À la boutique'}`,
+              token: localStorage.getItem('mystikAdminFCMToken'),
+            }),
+          });
+        } catch (pushErr) {
+          console.warn('Échec Push Admin:', pushErr);
+        }
+
+        try {
+          await fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order: newOrder, type: 'invoice' }),
+          });
         } catch (emailErr) {
-           console.warn("Échec envoi email:", emailErr);
+          console.warn('Échec envoi email:', emailErr);
         }
 
         clearCart();
         navigate('/success', { state: { order: newOrder } });
-
+      }
     } catch (error) {
-        console.error("Erreur Paiement/Commande:", error);
-        alert(`ÉCHEC DE LA COMMANDE : \n${error.message}`);
-        setLoading(false);
+      console.error('Erreur Paiement/Commande:', error);
+      alert(`ÉCHEC DE LA COMMANDE :\n${error.message}`);
+      setLoading(false);
     }
   };
 
@@ -428,10 +469,13 @@ const Checkout = () => {
                       <span className="text-primary-500">À votre charge</span>
                     </div>
                   )}
-                  {transactionFee > 0 && (
-                    <div className="flex justify-between text-[10px] font-bold text-gray-400 tracking-[0.2em] uppercase italic opacity-60 animate-fade-in">
-                      <span>Frais de service mobile</span>
-                      <span className="text-secondary">+{formatPrice(transactionFee)}</span>
+                  {selectedNetwork && selectedNetwork !== 'COD' && (
+                    <div className="flex justify-between text-[10px] font-bold text-amber-600 tracking-[0.2em] uppercase italic animate-fade-in">
+                      <span className="flex flex-col">
+                        Frais de service
+                        <span className="text-gray-400 normal-case tracking-normal font-normal mt-0.5">(1.5% frais de traitement)</span>
+                      </span>
+                      <span>+{formatPrice(transactionFee)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-3xl font-display font-bold pt-8 text-secondary uppercase italic leading-none border-t border-gray-50 mt-4">
@@ -447,13 +491,20 @@ const Checkout = () => {
                   className={`w-full mt-12 py-6 btn-primary shadow-2xl font-display italic tracking-widest text-lg ${!selectedNetwork ? 'opacity-40 grayscale cursor-not-allowed hover:scale-100 hover:shadow-none' : 'shadow-primary-500/30'}`}
                   disabled={loading || !selectedNetwork}
                 >
-                  {loading ? 'COMMANDE EN COURS...' : !selectedNetwork ? 'CHOISIR UN PAIEMENT' : (
+                  {loading ? 'REDIRECTION VERS FEDAPAY...' : !selectedNetwork ? 'CHOISIR UN PAIEMENT' : (
                     <span className="flex items-center justify-center">
-                      {selectedNetwork === 'COD' ? (wantsDelivery ? 'CONFIRMER LA LIVRAISON' : 'CONFIRMER LE RETRAIT') : `PAYER VIA ${selectedNetwork}`}
+                      {selectedNetwork === 'COD'
+                        ? (wantsDelivery ? 'CONFIRMER LA LIVRAISON' : 'CONFIRMER LE RETRAIT')
+                        : `CONFIRMER L'ACHAT`}
                       <ChevronRight className="ml-2 w-6 h-6" />
                     </span>
                   )}
                 </Button>
+                {selectedNetwork && selectedNetwork !== 'COD' && (
+                  <p className="text-center text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-4 opacity-70">
+                    🔒 Paiement sécurisé · Vous serez redirigé vers la page FedaPay
+                  </p>
+                )}
 
 
                 <div className="mt-10 pt-10 border-t border-gray-50 flex justify-center gap-10 opacity-30 grayscale saturate-0">

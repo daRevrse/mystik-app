@@ -1,4 +1,5 @@
 import express from 'express';
+import 'dotenv/config';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -11,7 +12,14 @@ dotenv.config({ path: '.env.local' });
 const app = express();
 const port = 3000;
 
-app.use(express.json());
+// Parse JSON pour toutes les routes SAUF le webhook FedaPay
+// (le webhook nécessite le body brut pour vérifier la signature HMAC)
+app.use((req, res, next) => {
+  if (req.path === '/api/fedapay-webhook') {
+    return next(); // Pas de parsing JSON pour cette route
+  }
+  express.json()(req, res, next);
+});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -39,7 +47,7 @@ app.all('/api/:functionName', async (req, res) => {
   try {
     // Dynamic import of the serverless function
     // We use a query param to cache-bust in dev if needed
-    const module = await import(`./api/${functionName}.js?update=${Date.now()}`);
+    const module = await import(`./api/${functionName}.js`);
     const handler = module.default;
 
     if (typeof handler !== 'function') {

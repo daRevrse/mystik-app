@@ -1,24 +1,59 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, Link, useNavigate } from 'react-router-dom';
-import { CheckCircle2, ChevronRight, Download, Printer, ShoppingBag, ArrowLeft, Star, Truck, ShieldCheck, QrCode } from 'lucide-react';
+import { useLocation, Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { CheckCircle2, ChevronRight, Download, Printer, ShoppingBag, ArrowLeft, Star, Truck, ShieldCheck, QrCode, Loader2 } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import { ReceiptService } from '../../services/ReceiptService';
 import { useAdminStore } from '../../store/useAdminStore';
+import { api } from '../../services/api';
 
 const Success = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const order = location.state?.order;
+  const [searchParams] = useSearchParams();
   const { incrementNewOrders } = useAdminStore();
 
+  // Commande passée via React Router state (flux interne : paiement à la livraison)
+  const stateOrder = location.state?.order;
+  // orderId passé en query param (flux externe : redirection depuis FedaPay)
+  const orderId = searchParams.get('orderId');
+
+  const [order, setOrder] = useState(stateOrder || null);
+  const [loading, setLoading] = useState(!stateOrder && !!orderId);
+  const [error, setError] = useState(null);
   const [qrCodeUrl, setQrCodeUrl] = useState(null);
 
-  React.useEffect(() => {
+  // Si on arrive via une redirection FedaPay (pas de state), on charge la commande depuis Firestore
+  useEffect(() => {
+    if (!stateOrder && orderId) {
+      let retries = 0;
+      const maxRetries = 5;
+
+      const tryLoad = async () => {
+        try {
+          const fetchedOrder = await api.getOrderById(orderId);
+          setOrder(fetchedOrder);
+          setLoading(false);
+        } catch (err) {
+          retries++;
+          if (retries < maxRetries) {
+            // Le webhook FedaPay peut mettre quelques secondes à mettre à jour Firestore
+            setTimeout(tryLoad, 2000);
+          } else {
+            setError('Commande introuvable. Vérifiez votre email de confirmation.');
+            setLoading(false);
+          }
+        }
+      };
+
+      tryLoad();
+    }
+  }, [stateOrder, orderId]);
+
+  useEffect(() => {
     if (order) {
       incrementNewOrders();
-      // Génération du QR code en temps réel
       ReceiptService.generateQRCode(order).then(url => setQrCodeUrl(url));
     }
   }, [order, incrementNewOrders]);
@@ -27,13 +62,34 @@ const Success = () => {
     return new Intl.NumberFormat('fr-FR').format(price) + ' FCFA';
   };
 
+  // États de chargement
+  if (loading) {
+    return (
+      <div className="pt-40 pb-24 text-center bg-[#fafaf9] min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-6">
+          <Loader2 className="w-12 h-12 text-primary-500 animate-spin" />
+          <p className="text-xs font-bold uppercase tracking-[0.3em] text-gray-400">
+            Confirmation de votre paiement en cours…
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="pt-40 pb-24 text-center bg-[#fafaf9] min-h-screen">
+        <h2 className="text-2xl font-display font-bold mb-4 uppercase italic">{error}</h2>
+        <Link to="/"><Button className="btn-primary">RETOUR À LA BOUTIQUE</Button></Link>
+      </div>
+    );
+  }
+
   if (!order) {
     return (
       <div className="pt-40 pb-24 text-center bg-[#fafaf9] min-h-screen">
         <h2 className="text-2xl font-display font-bold mb-4 uppercase italic">Aucune commande trouvée.</h2>
-        <Link to="/">
-          <Button className="btn-primary">RETOUR À LA BOUTIQUE</Button>
-        </Link>
+        <Link to="/"><Button className="btn-primary">RETOUR À LA BOUTIQUE</Button></Link>
       </div>
     );
   }
