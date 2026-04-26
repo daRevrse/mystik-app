@@ -4,8 +4,8 @@ import Button from '../../components/ui/Button';
 import { Wallet, ArrowUpRight, History, CreditCard, RefreshCw, CheckCircle2, Phone, Building2 } from 'lucide-react';
 
 const NETWORKS = [
-  { id: 'TOGOCEL_TG', label: 'T-Money (Togocel)', icon: '🇹🇬' },
-  { id: 'MOOV_TG', label: 'Moov Money', icon: '🇹🇬' },
+  { id: 'TOGOCEL_TG', label: 'T-Money', icon: '/images/yas.jpg' },
+  { id: 'MOOV_TG', label: 'Moov Money', icon: '/images/moov.jpg' },
 ];
 
 const Caisse = () => {
@@ -175,7 +175,9 @@ const Caisse = () => {
                           : 'border-gray-100 bg-gray-50 text-gray-400 grayscale hover:grayscale-0'
                       }`}
                     >
-                      <span className="text-2xl">{n.icon}</span>
+                      <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-100 shadow-sm bg-white">
+                        <img src={n.icon} alt={n.label} className="w-full h-full object-cover" />
+                      </div>
                       {n.label}
                     </button>
                   ))}
@@ -249,7 +251,7 @@ const Caisse = () => {
                 </div>
                 <div className="pt-4 border-t border-gray-50">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Frais FedaPay</p>
-                  <p className="text-xs font-bold text-secondary uppercase italic">Inclus dans la transaction (selon votre contrat)</p>
+                  <p className="text-xs font-bold text-secondary uppercase italic">Inclus dans la transaction</p>
                 </div>
                 <div className="pt-4 border-t border-gray-50">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Limites</p>
@@ -267,7 +269,7 @@ const Caisse = () => {
             </div>
           </Card>
 
-          <Card className="p-8 border-none shadow-lg bg-primary-500 text-secondary">
+          {/* <Card className="p-8 border-none shadow-lg bg-primary-500 text-secondary">
              <div className="flex items-center gap-3 mb-4">
                 <Building2 className="w-5 h-5" />
                 <h4 className="font-display font-black uppercase italic text-sm">Support Business</h4>
@@ -278,7 +280,7 @@ const Caisse = () => {
              <button className="w-full py-3 bg-secondary text-white text-[9px] font-black uppercase tracking-widest hover:bg-black transition-colors">
                 CONTACTER SUPPORT
              </button>
-          </Card>
+          </Card> */}
         </div>
       </div>
 
