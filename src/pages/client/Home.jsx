@@ -64,24 +64,24 @@ const Home = () => {
         </div>
 
         <div className="container mx-auto px-4 z-10 text-center animate-slide-up">
-          <Badge variant="primary" className="mb-6 px-4 py-1.5 border border-primary-500/30 bg-primary-500/10 text-primary-400 font-bold tracking-[0.2em] uppercase">
+          <Badge variant="primary" className="mb-4 md:mb-6 px-4 py-1 border border-primary-500/30 bg-primary-500/10 text-primary-400 font-bold tracking-[0.2em] uppercase text-[10px] md:text-xs">
             L'Esprit Authentique de Nos Terres
           </Badge>
-          <h1 className="text-7xl md:text-9xl font-display font-bold text-white mb-8 tracking-tighter leading-[0.85] uppercase italic">
+          <h1 className="text-5xl md:text-9xl font-display font-bold text-white mb-4 md:mb-8 tracking-tighter leading-[0.85] uppercase italic">
             MYSTIK<br />
-            <span className="text-5xl md:text-7xl text-primary-500 underline decoration-white/20 decoration-8 underline-offset-8">LEGEND'S DRINK.</span>
+            <span className="text-2xl md:text-7xl text-primary-500 underline decoration-white/20 decoration-4 md:decoration-8 underline-offset-4 md:underline-offset-8">LEGEND'S DRINK.</span>
           </h1>
-          <p className="text-gray-300 text-lg md:text-xl max-w-2xl mx-auto mb-10 font-bold italic opacity-90 tracking-wide uppercase">
+          <p className="text-gray-300 text-sm md:text-xl max-w-2xl mx-auto mb-8 md:mb-10 font-bold italic opacity-90 tracking-wide uppercase px-4 md:px-0">
             Découvrez l'excellence du Sodabi Togolais. Une liqueur premium distillée avec passion et tradition.
           </p>
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6">
-            <Button size="lg" className="w-full md:w-auto px-12 py-6 bg-primary-500 text-secondary" onClick={() => document.getElementById('catalogue').scrollIntoView({ behavior: 'smooth' })}>
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 px-6 md:px-0">
+            <Button size="lg" className="w-full md:w-auto px-8 md:px-12 py-4 md:py-6 bg-primary-500 text-secondary" onClick={() => document.getElementById('catalogue').scrollIntoView({ behavior: 'smooth' })}>
               ACHETER MAINTENANT
             </Button>
             <Button 
                variant="outline" 
                size="lg" 
-               className="w-full md:w-auto border-white text-white hover:bg-white hover:text-secondary group px-12 py-6"
+               className="w-full md:w-auto border-white text-white hover:bg-white hover:text-secondary group px-8 md:px-12 py-4 md:py-6"
                onClick={() => navigate('/about')}
             >
               NOTRE HISTOIRE
@@ -91,7 +91,7 @@ const Home = () => {
         </div>
 
         {/* Scroll Indicator */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center text-white/30 animate-pulse">
+        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex flex-col items-center text-white/30 animate-pulse">
           <span className="text-[10px] font-bold tracking-[0.3em] uppercase mb-2 italic">Explorer</span>
           <div className="w-[1px] h-12 bg-primary-500" />
         </div>
@@ -202,7 +202,7 @@ const Home = () => {
                         addItem(p);
                       }}
                     >
-                      AJOUTER À LA COLLECTION
+                      AJOUTER AU PANIER
                     </Button>
                   </div>
                 </Card>

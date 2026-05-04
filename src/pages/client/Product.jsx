@@ -192,7 +192,7 @@ const Product = () => {
                 onClick={() => addItem(product, quantity)}
                 disabled={product.stock === 0}
               >
-                {product.stock > 0 ? `AJOUTER À MA COLLECTION — ${formatPrice(product.price * quantity)}` : 'PRODUIT ÉPUISÉ'}
+                {product.stock > 0 ? `AJOUTER AU PANIER — ${formatPrice(product.price * quantity)}` : 'PRODUIT ÉPUISÉ'}
               </Button>
             </div>
 
