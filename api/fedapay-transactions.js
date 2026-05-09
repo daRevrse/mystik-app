@@ -61,6 +61,8 @@ export default async function handler(req, res) {
     });
     rawTransactions = rawTransactions.slice(0, limit);
 
+    // L'API renvoie customer_id / currency_id (pas d'objets embedded).
+    // On expose ce qu'on a vraiment + une éventuelle relation embedded si le SDK la peuple.
     const formattedTransactions = rawTransactions.map(t => ({
       id: t.id,
       reference: t.reference || '',
@@ -68,12 +70,16 @@ export default async function handler(req, res) {
       amount: parseFloat(t.amount) || 0,
       status: t.status || 'unknown',
       mode: t.mode || '',
+      currencyId: t.currency_id ?? null,
       currency: t.currency?.iso || 'XOF',
-      customer: t.customer ? {
-        firstname: t.customer.firstname || '',
-        lastname: t.customer.lastname || '',
-        email: t.customer.email || '',
-      } : null,
+      customerId: t.customer_id ?? null,
+      customer: t.customer
+        ? {
+            firstname: t.customer.firstname || '',
+            lastname: t.customer.lastname || '',
+            email: t.customer.email || '',
+          }
+        : null,
       createdAt: t.created_at || t.createdAt || null,
       updatedAt: t.updated_at || t.updatedAt || null,
     }));

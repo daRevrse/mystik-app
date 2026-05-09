@@ -133,13 +133,18 @@ export default async function handler(req, res) {
     const transactionData = event.entity; // Objet transaction FedaPay
     let orderId = null;
 
-    // custom_metadata est un JSON stringifié
-    if (transactionData?.custom_metadata) {
-      try {
-        const meta = JSON.parse(transactionData.custom_metadata);
-        orderId = meta.orderId;
-      } catch (_) {
-        console.warn('[FedaPay Webhook] Impossible de parser custom_metadata.');
+    // custom_metadata peut être renvoyé soit comme objet (doc officielle) soit
+    // comme string JSON selon le SDK/API. On gère les deux cas.
+    const cm = transactionData?.custom_metadata;
+    if (cm) {
+      if (typeof cm === 'string') {
+        try {
+          orderId = JSON.parse(cm)?.orderId ?? null;
+        } catch (_) {
+          console.warn('[FedaPay Webhook] custom_metadata string non parsable.');
+        }
+      } else if (typeof cm === 'object') {
+        orderId = cm.orderId ?? null;
       }
     }
 
