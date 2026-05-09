@@ -33,6 +33,9 @@ const mockRes = (res) => ({
   json: (data) => res.json(data),
   setHeader: (name, value) => res.setHeader(name, value),
   send: (data) => res.send(data),
+  redirect: (url) => res.redirect(url),
+  writeHead: (code, headers) => res.writeHead(code, headers),
+  end: () => res.end(),
 });
 
 // Middleware to map /api/* to api/*.js functions

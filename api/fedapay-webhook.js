@@ -51,14 +51,27 @@ export default async function handler(req, res) {
   // ─── Gestion de la redirection navigateur (GET) ───────────────────────────
   // FedaPay peut rediriger le client vers cette URL avec des params query.
   if (req.method === 'GET') {
-    const { status, id, orderId } = req.query;
-    console.log(`[FedaPay Webhook] Redirection navigateur reçue: status=${status}, orderId=${orderId}`);
+    const { status, id, orderId } = req.query || {};
+    console.log(`[FedaPay Webhook] Redirection navigateur reçue: status=${status}, orderId=${orderId}, id=${id}`);
 
+    // Construire l'URL de base depuis les headers ou l'env
+    const host = req.headers?.host || process.env.APP_URL || 'https://www.mystikdrinks.com';
+    const protocol = host.includes('localhost') ? 'http' : 'https';
+    const baseUrl = host.startsWith('http') ? host : `${protocol}://${host}`;
+
+    let redirectUrl;
     if (status === 'approved') {
-      return res.redirect(`/success?orderId=${orderId}&transaction_id=${id}`);
+      redirectUrl = `${baseUrl}/success?orderId=${orderId}&transaction_id=${id}`;
     } else {
-      return res.redirect(`/payment-cancelled?orderId=${orderId}`);
+      redirectUrl = `${baseUrl}/payment-cancelled?orderId=${orderId}`;
     }
+
+    console.log(`[FedaPay Webhook] Redirection vers: ${redirectUrl}`);
+
+    // Utiliser writeHead au lieu de res.redirect() pour compatibilité Vercel serverless
+    res.writeHead(302, { Location: redirectUrl });
+    res.end();
+    return;
   }
 
   if (req.method !== 'POST') {

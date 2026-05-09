@@ -380,5 +380,72 @@ export const api = {
       console.error("Error deleting category:", error);
       throw error;
     }
+  },
+
+  // Avis Clients
+  getReviews: async () => {
+    try {
+      const q = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'));
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(d => ({ ...d.data(), id: d.id }));
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+      throw error;
+    }
+  },
+
+  getActiveReviews: async () => {
+    try {
+      const q = query(
+        collection(db, 'reviews'), 
+        where('isActive', '==', true),
+        orderBy('createdAt', 'desc')
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(d => ({ ...d.data(), id: d.id }));
+    } catch (error) {
+      console.error("Error fetching active reviews:", error);
+      throw error;
+    }
+  },
+
+  createReview: async (reviewData) => {
+    try {
+      const reviewId = `rev-${Date.now()}`;
+      const newReview = {
+        ...reviewData,
+        id: reviewId,
+        isActive: reviewData.isActive !== undefined ? reviewData.isActive : true,
+        createdAt: serverTimestamp()
+      };
+      await setDoc(doc(db, 'reviews', reviewId), newReview);
+      return newReview;
+    } catch (error) {
+      console.error("Error creating review:", error);
+      throw error;
+    }
+  },
+
+  updateReview: async (reviewData) => {
+    try {
+      const { id, ...data } = reviewData;
+      const docRef = doc(db, 'reviews', id);
+      await updateDoc(docRef, data);
+      return reviewData;
+    } catch (error) {
+      console.error("Error updating review:", error);
+      throw error;
+    }
+  },
+
+  deleteReview: async (id) => {
+    try {
+      const { deleteDoc } = await import('firebase/firestore');
+      await deleteDoc(doc(db, 'reviews', id));
+      return true;
+    } catch (error) {
+      console.error("Error deleting review:", error);
+      throw error;
+    }
   }
 };

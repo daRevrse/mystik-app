@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
-import { Wallet, ArrowUpRight, History, CreditCard, RefreshCw, CheckCircle2, Phone, Building2 } from 'lucide-react';
+import Badge from '../../components/ui/Badge';
+import { Wallet, ArrowUpRight, ArrowDownLeft, History, CreditCard, RefreshCw, CheckCircle2, Phone, Wifi, WifiOff, AlertTriangle, Clock } from 'lucide-react';
 
 const NETWORKS = [
   { id: 'TOGOCEL_TG', label: 'T-Money', icon: '/images/yas.jpg' },
@@ -14,6 +15,14 @@ const Caisse = () => {
   const [loading, setLoading] = useState(true);
   const [withdrawing, setWithdrawing] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState('loading'); // 'connected' | 'error' | 'loading'
+  const [connectionError, setConnectionError] = useState(null);
+  const [lastFetch, setLastFetch] = useState(null);
+  const [environment, setEnvironment] = useState(null);
+  
+  // Transactions history
+  const [transactions, setTransactions] = useState([]);
+  const [loadingTx, setLoadingTx] = useState(true);
   
   // Withdrawal Form State
   const [amount, setAmount] = useState('');
@@ -22,27 +31,51 @@ const Caisse = () => {
 
   useEffect(() => {
     fetchBalances();
+    fetchTransactions();
   }, []);
 
   const fetchBalances = async () => {
     setLoading(true);
+    setConnectionStatus('loading');
+    setConnectionError(null);
     try {
       const res = await fetch('/api/fedapay-balance');
       const data = await res.json();
-      if (data.success) {
+      if (data.success && data.connected) {
         setBalances(data.balances || []);
         setTotal(data.total || 0);
+        setConnectionStatus('connected');
+        setLastFetch(data.lastFetch || new Date().toISOString());
+        setEnvironment(data.environment);
+      } else {
+        setConnectionStatus('error');
+        setConnectionError(data.error || data.details || 'Erreur inconnue');
+        setBalances([]);
+        setTotal(0);
       }
     } catch (err) {
       console.error("Erreur solde:", err);
-      // Fallback/Mock for UI development
-      setBalances([
-        { mode: 'moov_tg', amount: 45800 },
-        { mode: 'mtn_open', amount: 100000 }
-      ]);
-      setTotal(145800);
+      setConnectionStatus('error');
+      setConnectionError(err.message || 'Impossible de joindre le serveur API');
+      setBalances([]);
+      setTotal(0);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTransactions = async () => {
+    setLoadingTx(true);
+    try {
+      const res = await fetch('/api/fedapay-transactions?limit=15');
+      const data = await res.json();
+      if (data.success) {
+        setTransactions(data.transactions || []);
+      }
+    } catch (err) {
+      console.error("Erreur transactions:", err);
+    } finally {
+      setLoadingTx(false);
     }
   };
 
@@ -74,6 +107,7 @@ const Caisse = () => {
         setPhone('');
         setTimeout(() => setSuccess(false), 5000);
         fetchBalances();
+        fetchTransactions();
       } else {
         alert("Erreur: " + data.error);
       }
@@ -89,9 +123,25 @@ const Caisse = () => {
   };
 
   const getNetworkName = (mode) => {
-    if (mode.includes('moov')) return 'Moov Money';
-    if (mode.includes('mtn') || mode.includes('togocel')) return 'T-Money / MTN';
+    if (!mode) return 'Inconnu';
+    const m = mode.toLowerCase();
+    if (m.includes('moov') || m.includes('flooz')) return 'Moov / Flooz';
+    if (m.includes('mtn') || m.includes('togocel') || m.includes('tmoney')) return 'T-Money / MTN';
     return mode.toUpperCase();
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'approved':
+        return <span className="bg-green-50 text-green-600 text-[8px] font-bold px-2 py-1 uppercase tracking-widest">Approuvé</span>;
+      case 'declined':
+      case 'canceled':
+        return <span className="bg-red-50 text-red-600 text-[8px] font-bold px-2 py-1 uppercase tracking-widest">Refusé</span>;
+      case 'pending':
+        return <span className="bg-amber-50 text-amber-600 text-[8px] font-bold px-2 py-1 uppercase tracking-widest">En cours</span>;
+      default:
+        return <span className="bg-gray-50 text-gray-600 text-[8px] font-bold px-2 py-1 uppercase tracking-widest">{status}</span>;
+    }
   };
 
   return (
@@ -99,10 +149,33 @@ const Caisse = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
         <div>
           <h1 className="text-4xl md:text-5xl font-display font-bold text-secondary uppercase italic leading-none">Gestion <span className="text-primary-500 underline decoration-black/5 decoration-8 underline-offset-8">CAISSE</span></h1>
-          <p className="text-gray-400 font-bold uppercase tracking-[0.3em] text-[10px] mt-4 opacity-70">Suivi des fonds et retraits FedaPay Live</p>
+          <div className="flex items-center gap-4 mt-4">
+            <p className="text-gray-400 font-bold uppercase tracking-[0.3em] text-[10px] opacity-70">Suivi des fonds et retraits FedaPay</p>
+            {/* Connection Status Indicator */}
+            {connectionStatus === 'connected' && (
+              <div className="flex items-center gap-1.5 bg-green-50 px-3 py-1 border border-green-100 animate-fade-in">
+                <Wifi className="w-3 h-3 text-green-500" />
+                <span className="text-[8px] font-bold text-green-600 uppercase tracking-widest">
+                  Connecté {environment === 'sandbox' ? '(Sandbox)' : '(Live)'}
+                </span>
+              </div>
+            )}
+            {connectionStatus === 'error' && (
+              <div className="flex items-center gap-1.5 bg-red-50 px-3 py-1 border border-red-100 animate-fade-in">
+                <WifiOff className="w-3 h-3 text-red-500" />
+                <span className="text-[8px] font-bold text-red-600 uppercase tracking-widest">Déconnecté</span>
+              </div>
+            )}
+            {connectionStatus === 'loading' && (
+              <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1 border border-gray-100">
+                <RefreshCw className="w-3 h-3 text-gray-400 animate-spin" />
+                <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Connexion...</span>
+              </div>
+            )}
+          </div>
         </div>
         <Button 
-            onClick={fetchBalances} 
+            onClick={() => { fetchBalances(); fetchTransactions(); }} 
             variant="outline" 
             className="border-gray-200 text-gray-500 hover:bg-gray-50 group font-bold tracking-widest text-[10px]"
         >
@@ -110,6 +183,20 @@ const Caisse = () => {
           ACTUALISER LE SOLDE
         </Button>
       </div>
+
+      {/* Error Banner */}
+      {connectionStatus === 'error' && connectionError && (
+        <div className="bg-red-50 border border-red-100 p-6 flex items-start gap-4 animate-fade-in">
+          <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-bold text-red-600 uppercase tracking-widest mb-1">Erreur de connexion FedaPay</p>
+            <p className="text-[10px] font-medium text-red-500 leading-relaxed">{connectionError}</p>
+            <p className="text-[9px] font-bold text-red-400 uppercase tracking-widest mt-2">
+              Vérifiez que FEDAPAY_SECRET_KEY et FEDAPAY_ENVIRONMENT sont correctement configurés dans vos variables d'environnement Vercel.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Balance Card Section */}
@@ -125,11 +212,19 @@ const Caisse = () => {
                 <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-gray-400">Solde Total Disponible</p>
                 <p className="text-xs font-bold text-white uppercase italic">FedaPay Platform</p>
               </div>
+              {lastFetch && (
+                <div className="ml-auto flex items-center gap-1.5 text-gray-500">
+                  <Clock className="w-3 h-3" />
+                  <span className="text-[8px] font-bold uppercase tracking-widest">
+                    {new Date(lastFetch).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="mb-14">
               <h2 className="text-6xl md:text-7xl font-display font-bold tracking-tighter italic leading-none">
-                {loading ? '--- ---' : formatPrice(total)}
+                {loading ? '--- ---' : connectionStatus === 'error' ? '---' : formatPrice(total)}
               </h2>
             </div>
 
@@ -146,7 +241,9 @@ const Caisse = () => {
                   </div>
                 </div>
               )) : (
-                <p className="text-gray-500 text-[10px] font-bold uppercase italic">Aucun fond actif par réseau.</p>
+                <p className="text-gray-500 text-[10px] font-bold uppercase italic">
+                  {connectionStatus === 'error' ? 'Connexion requise pour afficher les fonds.' : 'Aucun fond actif par réseau.'}
+                </p>
               )}
             </div>
           </Card>
@@ -217,7 +314,7 @@ const Caisse = () => {
 
                 <Button 
                   type="submit"
-                  disabled={withdrawing || total <= 0}
+                  disabled={withdrawing || connectionStatus !== 'connected' || total <= 0}
                   className="w-full bg-secondary hover:bg-black text-white font-display italic tracking-widest text-lg py-8 shadow-2xl"
                 >
                   {withdrawing ? 'TRAITEMENT EN COURS...' : 'CONFIRMER LE RETRAIT'}
@@ -268,53 +365,91 @@ const Caisse = () => {
                 </div>
             </div>
           </Card>
-
-          {/* <Card className="p-8 border-none shadow-lg bg-primary-500 text-secondary">
-             <div className="flex items-center gap-3 mb-4">
-                <Building2 className="w-5 h-5" />
-                <h4 className="font-display font-black uppercase italic text-sm">Support Business</h4>
-             </div>
-             <p className="text-[10px] font-bold uppercase tracking-wider leading-relaxed mb-4">
-                Besoin d'augmenter vos plafonds de retrait ? Contactez votre gestionnaire FedaPay.
-             </p>
-             <button className="w-full py-3 bg-secondary text-white text-[9px] font-black uppercase tracking-widest hover:bg-black transition-colors">
-                CONTACTER SUPPORT
-             </button>
-          </Card> */}
         </div>
       </div>
 
-      {/* History Placeholder (Could be linked to Firebase) */}
+      {/* Transaction History */}
       <Card className="p-10 border-none shadow-xl bg-white">
         <div className="flex items-center justify-between mb-10 pb-6 border-b border-gray-100">
            <div className="flex items-center gap-4">
               <div className="w-10 h-10 bg-gray-50 flex items-center justify-center">
                 <History className="w-5 h-5 text-secondary" />
               </div>
-              <h3 className="text-xl font-display font-bold uppercase italic">Historique des Retraits (3D)</h3>
+              <div>
+                <h3 className="text-xl font-display font-bold uppercase italic">Historique des Transactions</h3>
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">Dernières transactions FedaPay</p>
+              </div>
            </div>
+           <button 
+             onClick={fetchTransactions}
+             className="text-[10px] font-bold text-gray-400 uppercase tracking-widest hover:text-secondary transition-colors flex items-center gap-2"
+           >
+             <RefreshCw className={`w-3 h-3 ${loadingTx ? 'animate-spin' : ''}`} />
+             Rafraîchir
+           </button>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-gray-50">
-                <th className="pb-6 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Date</th>
-                <th className="pb-6 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Montant</th>
-                <th className="pb-6 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Destination</th>
-                <th className="pb-6 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] text-right">Statut</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {[].length === 0 ? (
-                <tr>
-                  <td colSpan="4" className="py-12 text-center text-[10px] font-bold text-gray-300 uppercase italic tracking-widest">
-                    Aucune transaction récente trouvée dans l'historique direct.
-                  </td>
+          {loadingTx ? (
+            <div className="py-12 text-center">
+              <RefreshCw className="w-6 h-6 text-gray-300 animate-spin mx-auto mb-4" />
+              <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Chargement des transactions...</p>
+            </div>
+          ) : transactions.length > 0 ? (
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-gray-50">
+                  <th className="pb-6 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Date</th>
+                  <th className="pb-6 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Réf.</th>
+                  <th className="pb-6 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Description</th>
+                  <th className="pb-6 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Montant</th>
+                  <th className="pb-6 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] text-right">Statut</th>
                 </tr>
-              ) : null}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {transactions.map((tx) => (
+                  <tr key={tx.id} className="hover:bg-gray-50/50 transition-colors group">
+                    <td className="py-5">
+                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                        {tx.createdAt ? new Date(tx.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '---'}
+                      </span>
+                    </td>
+                    <td className="py-5">
+                      <span className="text-[10px] font-bold text-secondary uppercase tracking-widest font-mono">
+                        {tx.reference || `#${tx.id}`}
+                      </span>
+                    </td>
+                    <td className="py-5">
+                      <div>
+                        <p className="text-[10px] font-bold text-secondary truncate max-w-[200px]">{tx.description || 'Transaction'}</p>
+                        {tx.customer && (
+                          <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+                            {tx.customer.firstname} {tx.customer.lastname}
+                          </p>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-5">
+                      <span className={`text-sm font-bold italic ${tx.status === 'approved' ? 'text-green-600' : 'text-secondary'}`}>
+                        {formatPrice(tx.amount)}
+                      </span>
+                    </td>
+                    <td className="py-5 text-right">
+                      {getStatusBadge(tx.status)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="py-12 text-center">
+              <p className="text-[10px] font-bold text-gray-300 uppercase italic tracking-widest">
+                {connectionStatus === 'error' 
+                  ? 'Connexion à FedaPay requise pour afficher l\'historique.' 
+                  : 'Aucune transaction récente trouvée.'}
+              </p>
+            </div>
+          )}
         </div>
       </Card>
     </div>
@@ -322,4 +457,3 @@ const Caisse = () => {
 };
 
 export default Caisse;
-

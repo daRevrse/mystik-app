@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../../services/api';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import { useCartStore } from '../../store/useCartStore';
-import { ArrowRight, Star, Leaf, Ghost, Beer } from 'lucide-react';
+import { ArrowRight, Star, Leaf, Ghost, Beer, Quote, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const Home = () => {
@@ -13,6 +13,9 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState(['Tous']);
   const [activeCategory, setActiveCategory] = useState('Tous');
+  const [reviews, setReviews] = useState([]);
+  const [currentReview, setCurrentReview] = useState(0);
+  const reviewIntervalRef = useRef(null);
   const { addItem } = useCartStore();
   const navigate = useNavigate();
 
@@ -21,13 +24,16 @@ const Home = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [productsData, categoriesData] = await Promise.all([
+        const [productsData, categoriesData, reviewsData] = await Promise.all([
           api.getProducts(),
-          api.getCategories()
+          api.getCategories(),
+          api.getReviews().catch(() => [])
         ]);
         setProducts(productsData);
         setFilteredProducts(productsData);
         setCategories(['Tous', ...categoriesData.map(c => c.name)]);
+        // Filter active reviews client-side to avoid Firestore composite index requirement
+        setReviews(reviewsData.filter(r => r.isActive !== false));
       } catch (error) {
         console.error("Erreur lors de la récupération des données", error);
       } finally {
@@ -45,6 +51,25 @@ const Home = () => {
       setFilteredProducts(activeProducts.filter(p => p.category === activeCategory));
     }
   }, [activeCategory, products]);
+
+  // Auto-rotate reviews
+  useEffect(() => {
+    if (reviews.length > 1) {
+      reviewIntervalRef.current = setInterval(() => {
+        setCurrentReview(prev => (prev + 1) % reviews.length);
+      }, 6000);
+      return () => clearInterval(reviewIntervalRef.current);
+    }
+  }, [reviews.length]);
+
+  const nextReview = () => {
+    clearInterval(reviewIntervalRef.current);
+    setCurrentReview(prev => (prev + 1) % reviews.length);
+  };
+  const prevReview = () => {
+    clearInterval(reviewIntervalRef.current);
+    setCurrentReview(prev => (prev - 1 + reviews.length) % reviews.length);
+  };
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('fr-FR').format(price) + ' FCFA';
@@ -211,6 +236,143 @@ const Home = () => {
           )}
         </div>
       </section>
+
+      {/* Reviews / Testimonials Section */}
+      {reviews.length > 0 && (
+        <section className="py-24 md:py-32 bg-[#fafaf9] relative overflow-hidden">
+          {/* Decorative background elements */}
+          <div className="absolute top-10 left-10 w-32 h-32 bg-pink-200/30 rounded-full blur-2xl" />
+          <div className="absolute bottom-20 right-20 w-40 h-40 bg-blue-200/20 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 right-10 w-20 h-20 bg-amber-200/30 rounded-full blur-xl" />
+
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="text-center mb-16 md:mb-20">
+              <Badge variant="primary" className="bg-secondary text-white mb-6">Témoignages</Badge>
+              <h2 className="text-4xl md:text-6xl font-display font-bold tracking-tighter uppercase italic leading-none text-secondary">
+                Ce que disent nos <br />
+                <span className="text-primary-500 underline decoration-black/5 decoration-4 md:decoration-8 underline-offset-4 md:underline-offset-8">Ambassadeurs.</span>
+              </h2>
+            </div>
+
+            {/* Carousel */}
+            <div className="max-w-5xl mx-auto relative">
+              <div className="overflow-hidden">
+                <div 
+                  className="flex transition-transform duration-700 ease-in-out"
+                  style={{ transform: `translateX(-${currentReview * 100}%)` }}
+                >
+                  {reviews.map((review, idx) => (
+                    <div key={review.id || idx} className="w-full flex-shrink-0 px-4">
+                      <div className="flex flex-col md:flex-row items-center gap-10 md:gap-16 bg-white p-8 md:p-12 shadow-xl">
+                        
+                        {/* Photo Side */}
+                        <div className="relative flex-shrink-0">
+                          {/* Decorative Elements - Harmonized Mystik Palette */}
+                          <div className="absolute -top-6 -left-6 w-16 h-16 bg-primary-500/10 rounded-full blur-xl z-0" />
+                          <div className="absolute -top-3 left-4 w-10 h-10 bg-primary-500/20 rounded-full z-0" />
+                          <div className="absolute top-12 -right-4 w-6 h-6 bg-primary-400/30 rounded-full z-0" />
+                          <div className="absolute -bottom-4 left-8 w-12 h-12 bg-secondary/5 rounded-full z-0 border border-primary-500/10" />
+                          <div className="absolute bottom-8 -right-6 w-14 h-14 bg-primary-500/5 rounded-full blur-md z-0" />
+                          <div className="absolute top-1/2 -left-2 w-4 h-4 bg-primary-500/40 rounded-full z-0" />
+                          
+                          {review.photo ? (
+                            <div className="relative w-48 h-48 md:w-64 md:h-72 overflow-hidden rounded-2xl z-10 shadow-lg">
+                              <img 
+                                src={review.photo} 
+                                alt={review.customerName} 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="relative w-48 h-48 md:w-64 md:h-72 bg-gradient-to-br from-primary-500/20 to-primary-500/5 rounded-2xl z-10 flex items-center justify-center shadow-lg border border-primary-500/10">
+                              <img 
+                                src="/images/mystik/logo mystik.png" 
+                                alt="Mystik Logo" 
+                                className="w-24 md:w-32 opacity-20 grayscale"
+                              />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Text Side */}
+                        <div className="flex-1 text-center md:text-left">
+                          {/* Quote Icon */}
+                          <div className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center mb-6 mx-auto md:mx-0 shadow-lg shadow-primary-500/30">
+                            <Quote className="w-6 h-6 text-secondary" />
+                          </div>
+
+                          {/* Message */}
+                          <p className="text-base md:text-xl text-gray-700 leading-relaxed mb-8 font-medium italic">
+                            "{review.message}"
+                          </p>
+
+                          {/* Stars */}
+                          <div className="flex gap-1 mb-4 justify-center md:justify-start">
+                            {[1, 2, 3, 4, 5].map(s => (
+                              <Star 
+                                key={s} 
+                                className={`w-4 h-4 ${
+                                  s <= (review.rating || 5) 
+                                    ? 'text-amber-400 fill-amber-400' 
+                                    : 'text-gray-200 fill-gray-200'
+                                }`} 
+                              />
+                            ))}
+                          </div>
+
+                          {/* Author */}
+                          <div className="pt-4 border-t border-gray-100">
+                            <p className="text-lg font-bold text-secondary uppercase tracking-wide">{review.customerName}</p>
+                            <p className="text-[11px] font-bold text-primary-500 uppercase tracking-[0.3em] mt-1">Ambassadeur Mystik</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Navigation Arrows */}
+              {reviews.length > 1 && (
+                <>
+                  <button 
+                    onClick={prevReview}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-8 w-12 h-12 bg-white border border-gray-200 rounded-full flex items-center justify-center text-secondary hover:bg-primary-500 hover:text-white hover:border-primary-500 transition-all shadow-lg z-20"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={nextReview}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-8 w-12 h-12 bg-white border border-gray-200 rounded-full flex items-center justify-center text-secondary hover:bg-primary-500 hover:text-white hover:border-primary-500 transition-all shadow-lg z-20"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </>
+              )}
+
+              {/* Dots */}
+              {reviews.length > 1 && (
+                <div className="flex justify-center gap-3 mt-10">
+                  {reviews.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        clearInterval(reviewIntervalRef.current);
+                        setCurrentReview(idx);
+                      }}
+                      className={`rounded-full transition-all duration-500 ${
+                        idx === currentReview 
+                          ? 'w-10 h-3 bg-primary-500' 
+                          : 'w-3 h-3 bg-gray-300 hover:bg-gray-400'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Cultural Section */}
       <section className="py-32 bg-secondary text-white relative overflow-hidden text-center">
