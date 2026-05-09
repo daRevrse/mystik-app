@@ -27,19 +27,11 @@ export default async function handler(req, res) {
     FedaPay.setApiKey(FEDAPAY_SECRET_KEY);
     FedaPay.setEnvironment(FEDAPAY_ENVIRONMENT);
 
-    console.log(`[FedaPay Transactions] Récupération des ${limit} dernières transactions...`);
+    console.log(`[FedaPay Transactions] Récupération des transactions (limit ${limit})...`);
 
-    // Construire les paramètres de requête
-    const params = {
-      per_page: limit,
-      page: 1,
-    };
-
-    if (statusFilter) {
-      params['status'] = statusFilter;
-    }
-
-    const transactionsList = await Transaction.all(params);
+    // Le SDK FedaPay rejette certains params en query (400). On récupère sans filtres
+    // et on tronque côté serveur.
+    const transactionsList = await Transaction.all();
 
     // Parsing robuste similaire au balance
     let rawTransactions = [];
@@ -57,6 +49,17 @@ export default async function handler(req, res) {
         rawTransactions = [...transactionsList];
       }
     }
+
+    // Filtrage et tri côté serveur (le SDK rejette les query params)
+    if (statusFilter) {
+      rawTransactions = rawTransactions.filter(t => t.status === statusFilter);
+    }
+    rawTransactions.sort((a, b) => {
+      const dateA = new Date(a.created_at || a.createdAt || 0).getTime();
+      const dateB = new Date(b.created_at || b.createdAt || 0).getTime();
+      return dateB - dateA;
+    });
+    rawTransactions = rawTransactions.slice(0, limit);
 
     const formattedTransactions = rawTransactions.map(t => ({
       id: t.id,

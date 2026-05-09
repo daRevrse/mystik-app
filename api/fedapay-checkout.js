@@ -54,10 +54,11 @@ export default async function handler(req, res) {
       description: `Commande Mystik #${orderId}`,
       amount: Math.round(amount),
       currency: { iso: 'XOF' },
-      // URL appelée par FedaPay après le paiement (succès ou échec)
-      // On y ajoute l'orderId pour gérer le cas où FedaPay redirige le client ici
-      callback_url: `${BASE_URL}/api/fedapay-webhook?orderId=${orderId}`,
-      // URL de redirection après le paiement réussi
+      // URL où FedaPay redirige le navigateur du client après le paiement.
+      // On envoie directement vers la page Success qui fetche la commande depuis Firestore
+      // (mise à jour par le webhook POST côté serveur).
+      callback_url: `${BASE_URL}/success?orderId=${orderId}`,
+      // URL de redirection après le paiement réussi (selon SDK)
       redirect_url: `${BASE_URL}/success?orderId=${orderId}`,
       // URL de redirection si le client annule (si supporté par le SDK/API Checkout)
       cancel_url: `${BASE_URL}/payment-cancelled?orderId=${orderId}`,
